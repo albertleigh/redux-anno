@@ -29,7 +29,3 @@ export class Counter {
 export default Counter;
 
 ``` 
-
-For more info and details, please check the sample application `examples/react-sample-app` for now;
-
-More detailed docs are incoming~

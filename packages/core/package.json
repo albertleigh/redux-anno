@@ -1,0 +1,53 @@
+{
+  "name": "redux-anno",
+  "version": "0.0.1",
+  "description": "A middleware leverages certain boilerplate while using redux",
+  "scripts": {
+    "clean": "node ./scripts/clean.js",
+    "test": "jest",
+    "build:esm": "tsc -p ./tsconfig.prod.json",
+    "build:cjs": "webpack --config webpack.config.js",
+    "build": "npm run clean && npm run build:cjs && npm run build:esm",
+    "prepublishOnly": "npm run build",
+    "postpublish": "node ./scripts/post-publish.js",
+    "lint": "eslint --ext=js,jsx,ts,tsx src",
+    "lint:fix": "eslint --ext=js,jsx,ts,tsx src --fix"
+  },
+  "repository": {
+    "type": "git",
+    "url": "ssh://git@git.albertli90.com:9022/msft-sh/redux-anno.git"
+  },
+  "keywords": [
+    "redux",
+    "annotation"
+  ],
+  "files": [
+    "lib"
+  ],
+  "main": "lib/cjs/index.js",
+  "module": "lib/esm/index.js",
+  "types": "lib/esm/index.d.ts",
+  "author": "Wentao LI",
+  "license": "MIT",
+  "dependencies": {
+    "redux": "^4.0.5",
+    "redux-saga": "^1.1.3"
+  },
+  "devDependencies": {
+    "@types/jest": "^26.0.10",
+    "@typescript-eslint/eslint-plugin": "^4.0.1",
+    "@typescript-eslint/parser": "^4.0.1",
+    "eslint": "^7.8.1",
+    "jest": "^26.4.2",
+    "jest-environment-jsdom": "^26.3.0",
+    "jest-environment-jsdom-global": "^2.0.4",
+    "rimraf": "^3.0.2",
+    "ts-jest": "^26.3.0",
+    "ts-loader": "^8.0.3",
+    "ts-node": "^9.0.0",
+    "tslib": "^2.0.1",
+    "typescript": "^4.0.2",
+    "webpack": "^4.44.1",
+    "webpack-cli": "^3.3.12"
+  }
+}

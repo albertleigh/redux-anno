@@ -1,0 +1,22 @@
+.switcherCtn{
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  overflow-x: hidden;
+  overflow-y: auto;
+  .switcherItem{
+    border: #61dafb 1px solid;
+    box-shadow: inset 0 0 2px #61dafb;
+
+    margin-left: 0.3rem;
+    margin-top: 0.3rem;
+
+    min-width: 170px;
+    max-width: 240px;
+    max-height: 170px;
+  }
+  .activeSwitcherItem{
+    border: plum 1px solid;
+    box-shadow: inset 0 0 6px plum;
+  }
+}

@@ -1,0 +1,17 @@
+.mainView{
+    display: flex;
+    flex-direction: column;
+    > div:first-child{
+        display: flex;
+        flex-wrap: nowrap;
+        align-content: baseline;
+        justify-content: space-around;
+
+        width: 100vw;
+        height: 30px;
+    }
+    > div:nth-child(2){
+        width: 100vw;
+        height: calc( 100vh - 78px );
+    }
+}

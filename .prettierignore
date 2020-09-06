@@ -1,0 +1,17 @@
+out/
+build/
+dist/
+lib/
+coverage/
+node_modules/
+
+#IDE
+.idea/
+.vscode/
+
+public/
+scripts/
+__snapshots__/
+jest.config.js
+
+package-lock.json

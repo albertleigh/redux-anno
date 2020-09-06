@@ -1,32 +1,30 @@
 {
-  "name": "@albertli90/redux-anno",
-  "version": "0.0.1",
-  "description": "yoo~ redux-anno~ rnr",
-  "main": "index.js",
+  "name": "redux-anno-root",
+  "private": true,
   "scripts": {
-    "test": "jest"
+    "clean": "git clean -dfx",
+    "postinstall": "lerna bootstrap --ci",
+    "lint:fix": "lerna run lint:fix",
+    "prettify": "prettier --write",
+    "prettify:all": "prettier --write \"./{packages,examples}/**/*.{js,jsx,ts,tsx,json}\""
   },
-  "repository": {
-    "type": "git",
-    "url": "ssh://git@git.albertli90.com:9022/msft-sh/redux-anno.git"
-  },
-  "keywords": [
-    "redux",
-    "annotation"
-  ],
-  "author": "Wentao LI",
-  "license": "MIT",
   "devDependencies": {
-    "@types/jest": "^26.0.10",
-    "jest": "^26.4.2",
-    "jest-environment-jsdom": "^26.3.0",
-    "jest-environment-jsdom-global": "^2.0.4",
-    "prettier": "^2.1.1",
-    "redux": "^4.0.5",
-    "redux-saga": "^1.1.3",
-    "ts-jest": "^26.3.0",
-    "ts-node": "^9.0.0",
-    "tslib": "^2.0.1",
-    "typescript": "^4.0.2"
+    "husky": "^4.3.0",
+    "lerna": "^3.22.1",
+    "lint-staged": "^10.3.0",
+    "prettier": "^2.1.1"
+  },
+  "lint-staged": {
+    "!(examples)/**/*.{ts,tsx,js,jsx}": [
+      "npm run lint:fix -- --"
+    ],
+    "(examples|packages)/**/*.{json,ts,tsx,js,jsx}": [
+      "npm run prettify --"
+    ]
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
   }
 }
