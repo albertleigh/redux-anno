@@ -52,7 +52,7 @@ export const ViewItemSwitcher: React.FC<Props> = React.memo<Props>((props) => {
 
   const handleSetToCurrent = useCallback(
     (index: number) => () => {
-      viewMgr.current = index;
+      viewMgr.current.value = index;
     },
     [viewMgr]
   );

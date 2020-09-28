@@ -3,24 +3,22 @@ import {
   MODEL_NAME_FIELD,
   MODEL_TYPE,
   MODEL_TYPE_FIELD,
+  INSTANCE_ADDL_FIELD,
   INSTANCE_KEYS_FIELD,
   AsImdAnnoInst,
   ImdAnnoConstructor,
-  STATE_KEYS_FIELD,
-  REDUCER_KEYS_FIELD,
   SAGA_KEYS_FIELD,
   annoActionMethod,
   THUNK_KEYS_FIELD,
 } from './base';
 import IdGenerator from './id';
-import {WithStates, withStates} from './state';
-import {WithThunk, withThunk} from './thunk';
-import {WithSagas, withSagas} from './saga';
+import {WithStates, withStates, TransformState} from './state';
+import {WithReducers, withReducers, TransformReducer} from './reducer';
+import {WithThunk, withThunk, TransformThunk} from './thunk';
+import {WithSagas, withSagas, TransformSaga} from './saga';
 import {AnyClass, KeysOfType, Proto, prePopulateSetFieldViaPrototype} from './utils';
 import {getContext, instantiate} from './AnnoContext';
 import {ModelNotFound, InvalidInstanceCreatorParameters, InstanceNotFound} from './errors';
-
-const INSTANCE_ADDL_FIELD = '__isAnnoInstance';
 
 export interface IsAnnoInstanceField {
   [INSTANCE_ADDL_FIELD]: '__anno_instance';
@@ -46,7 +44,7 @@ export type WithInstances<T extends AnyClass> = {
 };
 
 export function withInstance<TModel extends AnyClass>(PreWrappedModel: TModel): WithInstances<TModel> {
-  const ModelWithInstance = function (this: WithInstances<WithSagas<WithStates<TModel>>>) {
+  const ModelWithInstance = function (this: WithInstances<TModel>) {
     const self = this as AsImdAnnoInst<TModel>;
 
     // set the contextName to empty str for default redux context
@@ -76,19 +74,7 @@ export function withInstance<TModel extends AnyClass>(PreWrappedModel: TModel): 
       // populate the context field
       for (const [ctxField, annoConstructor] of PreWrappedModel.prototype.constructor[MODEL_SELF_KEYS_FIELD]) {
         // all the fields needed to be populated into the context
-        const stateActKeys = new Set<string>();
         const actionKeys = new Set<string>();
-        if (annoConstructor.hasOwnProperty(STATE_KEYS_FIELD)) {
-          for (const stateKey of annoConstructor[STATE_KEYS_FIELD]) {
-            actionKeys.add(stateKey);
-            stateActKeys.add(stateKey);
-          }
-        }
-        if (annoConstructor.hasOwnProperty(REDUCER_KEYS_FIELD)) {
-          for (const reducerKey of annoConstructor[REDUCER_KEYS_FIELD]) {
-            actionKeys.add(reducerKey);
-          }
-        }
         if (annoConstructor.hasOwnProperty(THUNK_KEYS_FIELD)) {
           for (const thunkKey of annoConstructor[THUNK_KEYS_FIELD]) {
             actionKeys.add(thunkKey);
@@ -104,17 +90,6 @@ export function withInstance<TModel extends AnyClass>(PreWrappedModel: TModel): 
         for (const actKey of actionKeys) {
           const actKeyObj: Record<string | number, any> = {};
           // populate value fun only for the state fields
-          if (stateActKeys.has(actKey)) {
-            Object.defineProperty(actKeyObj, 'value', {
-              get() {
-                return self[actKey];
-              },
-              set(val) {
-                self[actKey] = val;
-              },
-              enumerable: true,
-            });
-          }
           Object.defineProperty(actKeyObj, 'type', {
             value: self[annoActionMethod(actKey, 'type')],
             enumerable: true,
@@ -122,17 +97,17 @@ export function withInstance<TModel extends AnyClass>(PreWrappedModel: TModel): 
           });
           Object.defineProperty(actKeyObj, 'is', {
             value: self[annoActionMethod(actKey, 'is')].bind(this),
-            enumerable: true,
+            enumerable: false,
             writable: false,
           });
           Object.defineProperty(actKeyObj, 'create', {
             value: self[annoActionMethod(actKey, 'create')].bind(this),
-            enumerable: true,
+            enumerable: false,
             writable: false,
           });
           Object.defineProperty(actKeyObj, 'dispatch', {
             value: self[annoActionMethod(actKey, 'dispatch')].bind(this),
-            enumerable: true,
+            enumerable: false,
             writable: false,
           });
           Object.defineProperty(ctxFieldObj, actKey, {
@@ -173,7 +148,7 @@ export function withInstance<TModel extends AnyClass>(PreWrappedModel: TModel): 
 
         if (theModelMeta?.type === MODEL_TYPE.SINGLETON) {
           let theInstance: any;
-          const theArgs = typeof args === 'function' ? args() : args;
+          const theArgs = typeof args === 'function' ? (args as any)() : args;
           try {
             theInstance = curAnnoCtx.getOneInstance(model);
           } catch (e) {
@@ -194,7 +169,7 @@ export function withInstance<TModel extends AnyClass>(PreWrappedModel: TModel): 
         } else if (theModelMeta?.type === MODEL_TYPE.PROTOTYPE) {
           // populate graph to toposort for cyclic instance
           curAnnoCtx.addPrototypeInstanceEdge(selfModelMeta.name, theModelMeta.name);
-          const theArgs = typeof args === 'function' ? args() : args;
+          const theArgs = typeof args === 'function' ? (args as any)() : args;
           let theInstance: any;
           Object.defineProperty(self, insField, {
             get(): any {
@@ -219,21 +194,21 @@ export function withInstance<TModel extends AnyClass>(PreWrappedModel: TModel): 
   return (ModelWithInstance as unknown) as WithInstances<TModel>;
 }
 
-export type HasInstances = {[INSTANCE_KEYS_FIELD]: any};
-export type InstanceKeys<T extends HasInstances> = keyof T[typeof INSTANCE_KEYS_FIELD];
-export function getInstanceProperty<TModel extends HasInstances, TKey extends InstanceKeys<TModel>>(
-  model: TModel,
+export type InsHasInstances = {[INSTANCE_KEYS_FIELD]: any};
+export type InstanceKeys<T extends InsHasInstances> = keyof T[typeof INSTANCE_KEYS_FIELD];
+export function getInstanceProperty<TIns extends InsHasInstances, TKey extends InstanceKeys<TIns>>(
+  instance: TIns,
   key: TKey
 ) {
-  return model[key];
+  return instance[key];
 }
 
 export type InstancedConstructor<Model extends AnyClass> = WithInstances<
-  WithSagas<WithThunk<WithStates<ImdAnnoConstructor<Model>>>>
+  WithReducers<WithSagas<WithThunk<WithStates<ImdAnnoConstructor<Model>>>>>
 >;
 export function Instanced<Model extends AnyClass>(model: Model): InstancedConstructor<Model> {
   // the sequence here is critically important
-  return withInstance(withSagas(withThunk(withStates(model as ImdAnnoConstructor<Model>))));
+  return withInstance(withReducers(withSagas(withThunk(withStates(model as ImdAnnoConstructor<Model>)))));
 }
 
 interface InnerInstanceParameters<TModel extends AnyClass> {
@@ -245,9 +220,13 @@ export type CreateInstanceParameters<Model extends AnyClass> = ConstructorParame
   ? [Model, state?: any]
   : [Model, ConstructorParameters<Model> | (() => ConstructorParameters<Model>), state?: Record<string, any>];
 
+export type TransformClzInstance<T extends Record<string | number, any>> = TransformInstance<
+  TransformReducer<TransformSaga<TransformThunk<TransformState<T>>>>
+>;
+
 export function createInstance<Model extends AnyClass>(
   ...args: CreateInstanceParameters<Model>
-): InstanceType<InstancedConstructor<Model>> & IsAnnoInstanceField {
+): TransformClzInstance<AsImdAnnoInst<Model>> & IsAnnoInstanceField {
   let result: InnerInstanceParameters<any>;
   if (args.length === 3) {
     result = {
@@ -274,8 +253,12 @@ export function createInstance<Model extends AnyClass>(
   } else {
     throw new InvalidInstanceCreatorParameters(`Cannot populate instance as its parameters are invalid`);
   }
-  return (result as unknown) as InstanceType<InstancedConstructor<Model>> & IsAnnoInstanceField;
+  return (result as unknown) as TransformClzInstance<AsImdAnnoInst<Model>> & IsAnnoInstanceField;
 }
 
-export type InsTyp<M extends AnyClass> = AsImdAnnoInst<InstancedConstructor<M>>;
+export type InsTyp<M> = M extends AnyClass
+  ? AsImdAnnoInst<InstancedConstructor<M>>
+  : AsImdAnnoInst<TransformClzInstance<M>>;
 export type InsArg<M extends AnyClass> = [M, ConstructorParameters<M>];
+// export type InsArg<M> =
+//   M extends AnyClass ? [M, ConstructorParameters<M>] : [AnyClass<M>, any[]];

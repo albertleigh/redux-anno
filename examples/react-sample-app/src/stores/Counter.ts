@@ -1,4 +1,4 @@
-import {Model, State, Saga, Self, createSelf, createState} from 'redux-anno';
+import {Model, State, Saga, createState} from 'redux-anno';
 
 import {putResolve} from 'redux-saga/effects';
 
@@ -7,12 +7,9 @@ export class Counter {
   @State
   count = createState(0 as number);
 
-  @Self
-  self = createSelf(Counter);
-
   @Saga()
   *updateCount(nextVal: number) {
-    yield putResolve(this.self.count.create(nextVal));
+    yield putResolve(this.count.create(nextVal));
   }
 }
 

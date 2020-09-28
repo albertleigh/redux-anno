@@ -3,7 +3,7 @@ import {InsTyp, InsArg} from './instanced';
 
 import {instantiate, disband} from './AnnoContext';
 
-export class PrototypeSet<M, C extends AnyClass = AnyClass<M>> {
+export class PrototypeSet<C extends AnyClass> {
   public innerSet: Set<InsTyp<C>> = new Set();
 
   constructor(private contextName: string) {}

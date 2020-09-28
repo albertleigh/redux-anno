@@ -13,7 +13,7 @@ export const WelcomePanel: React.FC<Props> = React.memo<Props>((props) => {
   const {onSetToCurrent, onClose, item} = props;
 
   const title = useSelector(() => item.title);
-  const welcomeMsg = useSelector(() => item.welcomeMsg);
+  const welcomeMsg = useSelector(() => item.welcomeMsg.value);
   const modelKey = useSelector(() => item.modelKey);
 
   return (

@@ -1,6 +1,15 @@
 import {Reducer as ReduxReducer} from 'redux';
 
-import {DELETE_STATE_VALUE, _InnerStateField, STATE_KEYS_FIELD, REDUCER_KEYS_FIELD, AsImdAnnoInst} from './base';
+import {
+  DELETE_STATE_VALUE,
+  _InnerStateField,
+  STATE_KEYS_FIELD,
+  REDUCER_ADDL_FIELD,
+  REDUCER_KEYS_FIELD,
+  AsImdAnnoInst,
+  annoActionMethod,
+  ImdAnnoConstructor,
+} from './base';
 import {getContext} from './AnnoContext';
 import {
   RegisterOption,
@@ -10,33 +19,83 @@ import {
   reloadActionHelper,
   ReloadOption,
   implementActionHelper,
+  FullActionHelper,
+  PartialActionHelper,
+  ActionHelper,
 } from './action';
 import {getSubState, setSubState, ModelSates} from './state';
-import {prePopulateSetFieldViaPrototype, Proto} from './utils';
+import {AnyClass, KeysOfType, prePopulateSetFieldViaPrototype, Proto} from './utils';
 
-export type ReducerField<TModel extends any, TPayload> = ModelReducer<ModelSates<TModel>, TPayload>;
+export interface IsAnnoReducerField {
+  [REDUCER_ADDL_FIELD]: '__anno_reducer';
+}
+
+export type FullModelReducer<TState = any, TPayload = any> = (previousState: TState, payload: TPayload) => TState;
+type ExtractFullModelReducerState<T> = T extends (param1: infer _TState, _param2: any) => any ? _TState : unknown;
+type ExtractFullModelReducerPayload<T> = T extends (param1: any, _param2: infer _TPayload) => any ? _TPayload : unknown;
+
+export type PartialModelReducer<TState = any> = (previousState: TState) => TState;
+type ExtractPartialModelReducerState<T> = T extends (param1: infer _TState) => any ? _TState : unknown;
+
+export type ModelReducer = FullModelReducer | PartialModelReducer;
+
+export type FullReducerField<TState, TPayload> = FullModelReducer<TState, TPayload> &
+  FullActionHelper<TPayload, void> &
+  IsAnnoReducerField;
+export type PartialReducerField<TState> = PartialModelReducer<ModelSates<TState>> &
+  PartialActionHelper<void> &
+  IsAnnoReducerField;
+
 export type ExtractReducerFieldPayload<T> = T extends (state: any, payload: infer _TPayload) => void
   ? _TPayload
   : undefined;
-export function Reducer<TModel extends any>() {
-  return function <
-    TKey extends string,
-    TTarget extends {
-      [K in TKey]: TTarget[K] extends ReducerField<TModel, infer TPayload> ? ReducerField<TModel, TPayload> : void;
-    } &
-      TModel
-  >(target: TTarget, propertyKey: TKey) {
-    const privateTarget = target as Proto<TTarget>;
-    prePopulateSetFieldViaPrototype(target as Proto<TTarget>, REDUCER_KEYS_FIELD);
-    privateTarget.constructor[REDUCER_KEYS_FIELD]!.add(propertyKey);
-    implementActionHelper(target.constructor as any, propertyKey);
+export function Reducer<
+  TKey extends string,
+  TTarget extends {
+    [K in TKey]: IsAnnoReducerField;
+  }
+>(target: TTarget, propertyKey: TKey) {
+  const privateTarget = target as Proto<TTarget>;
+  prePopulateSetFieldViaPrototype(target as Proto<TTarget>, REDUCER_KEYS_FIELD);
+  privateTarget.constructor[REDUCER_KEYS_FIELD]!.add(propertyKey);
+  implementActionHelper(target.constructor as any, propertyKey);
+}
+export type TransformReducer<T extends Record<string | number, any>> = {
+  [P in keyof T]: T[P] extends IsAnnoReducerField ? ActionHelper<ExtractReducerFieldPayload<T[P]>, void> : T[P];
+} & {
+  [REDUCER_KEYS_FIELD]: Pick<T, KeysOfType<T, IsAnnoReducerField>>;
+};
+
+export type WithReducers<T extends AnyClass> = T & {
+  new (...args: ConstructorParameters<T>): TransformReducer<InstanceType<T>>;
+};
+
+export function withReducers<TModel extends AnyClass>(PreWrappedModel: TModel): WithReducers<TModel> {
+  const ModelWithReducers = function (this: WithReducers<TModel>) {
+    PreWrappedModel.apply(this, arguments as any);
+    const self = this as AsImdAnnoInst<any>;
+    for (const reducerKey of PreWrappedModel.prototype.constructor[REDUCER_KEYS_FIELD]) {
+      self[reducerKey]['type'] = self[annoActionMethod(reducerKey, 'type')];
+      self[reducerKey]['is'] = self[annoActionMethod(reducerKey, 'is')].bind(this);
+      self[reducerKey]['create'] = self[annoActionMethod(reducerKey, 'create')].bind(this);
+      self[reducerKey]['dispatch'] = self[annoActionMethod(reducerKey, 'dispatch')].bind(this);
+    }
   };
+  ModelWithReducers.prototype = PreWrappedModel.prototype;
+  return (ModelWithReducers as unknown) as WithReducers<TModel>;
 }
 
-export type ModelReducer<TState extends Record<string | number, unknown> = any, TPayload = any> = (
-  previousState: TState,
-  payload: TPayload
-) => TState;
+export const createReducer: <
+  TState = any,
+  TPayload = any,
+  TReducer = FullModelReducer<TState, TPayload> | PartialModelReducer<TState>
+>(
+  reducer: TReducer
+) => TReducer extends PartialModelReducer
+  ? PartialReducerField<ExtractPartialModelReducerState<TReducer>>
+  : TReducer extends FullModelReducer
+  ? FullReducerField<ExtractFullModelReducerState<TReducer>, ExtractFullModelReducerPayload<TReducer>>
+  : unknown = ((reducer: any) => reducer) as any;
 
 export function createReduxReducer(annoCtxName?: string): ReduxReducer {
   function register(rootState: any, options?: RegisterOption[]) {
@@ -58,22 +117,53 @@ export function createReduxReducer(annoCtxName?: string): ReduxReducer {
           }
         }
         for (const stateKey of instance.constructor[STATE_KEYS_FIELD] as Set<string>) {
+          const stateKeyObj: Record<string | number, any> = {};
+
           // intercept the set/get of that field for the instance
-          Object.defineProperty(instance, stateKey, {
+          Object.defineProperty(stateKeyObj, 'value', {
             set(value: any) {
-              const self = this as AsImdAnnoInst<any>;
-              getContext(self.contextName).store?.dispatch({
-                type: getContext(self.contextName).assembleActionName(self.modelName, stateKey, self.modelKey),
+              getContext(instance.contextName).store?.dispatch({
+                type: getContext(instance.contextName).assembleActionName(
+                  instance.modelName,
+                  stateKey,
+                  instance.modelKey
+                ),
                 payload: value,
               });
             },
             get(): any {
-              const self = this as any;
-              return getSubState(getContext(self.contextName).store.getState(), self.modelName, self.modelKey)?.[
-                stateKey
-              ];
+              return getSubState(
+                getContext(instance.contextName).store.getState(),
+                instance.modelName,
+                instance.modelKey
+              )?.[stateKey];
             },
             enumerable: true,
+          });
+          Object.defineProperty(stateKeyObj, 'type', {
+            value: instance[annoActionMethod(stateKey, 'type')],
+            enumerable: true,
+            writable: false,
+          });
+          Object.defineProperty(stateKeyObj, 'is', {
+            value: instance[annoActionMethod(stateKey, 'is')].bind(instance),
+            enumerable: false,
+            writable: false,
+          });
+          Object.defineProperty(stateKeyObj, 'create', {
+            value: instance[annoActionMethod(stateKey, 'create')].bind(instance),
+            enumerable: false,
+            writable: false,
+          });
+          Object.defineProperty(stateKeyObj, 'dispatch', {
+            value: instance[annoActionMethod(stateKey, 'dispatch')].bind(instance),
+            enumerable: false,
+            writable: false,
+          });
+          Object.defineProperty(instance, stateKey, {
+            value: stateKeyObj,
+            enumerable: true,
+            writable: false,
           });
         }
         rootState = setSubState(rootState, state, instance.modelName, instance.modelKey);
@@ -118,7 +208,10 @@ export function createReduxReducer(annoCtxName?: string): ReduxReducer {
     if (!!actionNames) {
       const {modelName, key, fieldName} = actionNames;
       const theInstance = curAnnCtx.getOneInstance(modelName, key);
-      const theReducer = curAnnCtx.getModelMeta(modelName)?.reducersByFieldName.get(fieldName);
+      let theReducer = curAnnCtx.getModelMeta(modelName)?.reducersByFieldName.get(fieldName);
+      if (!theReducer && (theInstance.constructor as ImdAnnoConstructor<any>)[REDUCER_KEYS_FIELD].has(fieldName)) {
+        theReducer = theInstance[fieldName].bind(theInstance);
+      }
       if (!!theInstance && !!theReducer) {
         const theState = getSubState(rootState, modelName, key);
         const newState = theReducer(theState, action.payload);

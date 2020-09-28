@@ -11,7 +11,7 @@ const CounterComp = React.memo(() => {
 
   const counterInst = useMemo(() => defaultCtx.getOneInstance(CounterModel), [defaultCtx]);
 
-  const counterVal = useSelector(() => counterInst.count);
+  const counterVal = useSelector(() => counterInst.count.value);
 
   const updateCounterVal = useCallback(
     (nextVal: number) => () => {

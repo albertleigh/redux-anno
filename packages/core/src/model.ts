@@ -11,10 +11,8 @@ import {
   SAGA_KEYS_FIELD,
   INSTANCE_KEYS_FIELD,
 } from './base';
-import {ActionHelper, StateActionHelper} from './action';
+import {ActionHelper} from './action';
 import {AnyClass, prePopulateMapFieldViaPrototype, Proto} from './utils';
-import {StateField} from './state';
-import {ReducerField, ExtractReducerFieldPayload} from './reducer';
 import {ThunkField, ExtractThunkFieldPayload, ExtractThunkFieldResult} from './thunk';
 import {SagaField, ExtractSagaFieldPayload, ExtractSagaFieldResult} from './saga';
 import {Instanced} from './instanced';
@@ -22,15 +20,11 @@ import {ModelMeta, getContext} from './AnnoContext';
 import {DuplicatedModelFound} from './errors';
 
 type ModelSelfImplType<TModel extends AnyClass> = {
-  [P in keyof Omit<InstanceType<TModel>, 'self'>]: InstanceType<TModel>[P] extends StateField<infer F>
-    ? StateActionHelper<F, void>
-    : InstanceType<TModel>[P] extends ReducerField<any, any>
-    ? ActionHelper<ExtractReducerFieldPayload<InstanceType<TModel>[P]>, void>
-    : InstanceType<TModel>[P] extends ThunkField
+  [P in keyof InstanceType<TModel>]: InstanceType<TModel>[P] extends ThunkField
     ? ActionHelper<ExtractThunkFieldPayload<InstanceType<TModel>[P]>, ExtractThunkFieldResult<InstanceType<TModel>[P]>>
     : InstanceType<TModel>[P] extends SagaField
     ? ActionHelper<ExtractSagaFieldPayload<InstanceType<TModel>[P]>, ExtractSagaFieldResult<InstanceType<TModel>[P]>>
-    : unknown;
+    : never;
 };
 export type ModelSelfType<TModel extends AnyClass> = ModelSelfImplType<TModel> & AnnoInstanceBase;
 export function Self<TKey extends string, TTarget extends {[K in TKey]: ModelSelfType<any>}>(
@@ -116,9 +110,6 @@ export function Model(type: MODEL_TYPE = MODEL_TYPE.SINGLETON, modelName?: strin
         ...previousState,
         [stateKey]: payload,
       }));
-    }
-    for (const reducerKey of _constructor[REDUCER_KEYS_FIELD] || []) {
-      reducersByFieldName.set(reducerKey, _constructor.prototype[reducerKey]);
     }
     defaultAnnoCtx.registerModel(constructor, InstancedConstructor, theModelMeta);
   };

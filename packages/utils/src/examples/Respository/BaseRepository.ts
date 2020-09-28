@@ -1,12 +1,17 @@
 import {all, putResolve} from 'redux-saga/effects';
-import {createState, State, Reducer, ModelSates, Saga, createSelf, Self, Model} from 'redux-anno';
+import {createState, State, Reducer, Saga, Model, createReducer} from 'redux-anno';
+
+// import {ModelSates} from 'redux-anno'
+// ModelSates<BaseRepository<T>>
+interface State<T> {
+  allIds: string[];
+  byId: Record<string, T>;
+}
 
 @Model()
 export class BaseRepository<T> {
   @State allIds = createState<string[]>([]);
   @State byId = createState<Record<string, T>>({} as Record<string, T>);
-
-  @Self self = createSelf(BaseRepository);
 
   getEntityId(t: T): string {
     if ('id' in t) {
@@ -16,20 +21,21 @@ export class BaseRepository<T> {
   }
 
   getItems(ids: string[]): T[] {
-    const byId = this.self.byId.value as Record<string, T>;
+    const byId = this.byId.value as Record<string, T>;
     return ids.map((one) => byId[one]);
   }
 
-  @Reducer<BaseRepository<T>>()
-  doClear(_preState: ModelSates<BaseRepository<T>>) {
+  @Reducer
+  doClear = createReducer((_preState: State<T>) => {
     return {
+      ..._preState,
       allIds: [],
       byId: {},
     };
-  }
+  });
 
-  @Reducer<BaseRepository<T>>()
-  doUpdate(preState: ModelSates<BaseRepository<T>>, items: T[]) {
+  @Reducer
+  doUpdate = createReducer((preState: State<T>, items: T[]) => {
     if (!!items.length) {
       const allIds = [...preState.allIds];
       const byId = {...preState.byId};
@@ -48,10 +54,10 @@ export class BaseRepository<T> {
     } else {
       return preState;
     }
-  }
+  });
 
-  @Reducer<BaseRepository<T>>()
-  doDelete(preState: ModelSates<BaseRepository<T>>, ids: string[]) {
+  @Reducer
+  doDelete = createReducer((preState: State<T>, ids: string[]) => {
     if (!!ids.length) {
       const deletedIdSet = new Set(ids);
       const allIds = preState.allIds.filter((one) => !deletedIdSet.has(one));
@@ -67,7 +73,7 @@ export class BaseRepository<T> {
     } else {
       return preState;
     }
-  }
+  });
 
   @Saga()
   *doUpdateAndDelete(items: (T | string)[]) {
@@ -90,6 +96,6 @@ export class BaseRepository<T> {
     const toUpdate = Array.from(updateSet.values());
     const toDelete = Array.from(deleteSet);
 
-    yield all([putResolve(this.self.doUpdate.create(toUpdate)), putResolve(this.self.doDelete.create(toDelete))]);
+    yield all([putResolve(this.doUpdate.create(toUpdate)), putResolve(this.doDelete.create(toDelete))]);
   }
 }

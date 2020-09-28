@@ -3,7 +3,7 @@ import {AnyClass} from './utils';
 
 import {instantiate, disband} from './AnnoContext';
 
-export class PrototypeArray<M, C extends AnyClass = AnyClass<M>> {
+export class PrototypeArray<C extends AnyClass> {
   public insArr: Array<InsTyp<C>> = [];
 
   constructor(private contextName: string) {}

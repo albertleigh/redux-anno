@@ -3,7 +3,7 @@ import {AnyClass} from './utils';
 
 import {instantiate, disband} from './AnnoContext';
 
-export class PrototypeMap<K, M, C extends AnyClass = AnyClass<M>> {
+export class PrototypeMap<K, C extends AnyClass> {
   public innerMap: Map<K, InsTyp<C>> = new Map();
 
   constructor(private contextName: string) {}

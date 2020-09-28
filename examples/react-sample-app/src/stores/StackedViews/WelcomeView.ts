@@ -1,4 +1,4 @@
-import {Model, MODEL_TYPE, Self, createSelf, State, createState} from 'redux-anno';
+import {createState, Model, MODEL_TYPE, State} from 'redux-anno';
 import {putResolve} from 'redux-saga/effects';
 import {BaseView, VIEW_TYPE} from './BaseView';
 
@@ -8,14 +8,12 @@ export class WelcomeView extends BaseView {
 
   @State welcomeMsg = createState<string>('');
 
-  @Self self = createSelf(WelcomeView);
-
   constructor() {
     super('Welcome View');
   }
 
   *onPostEnter() {
-    yield putResolve(this.self.welcomeMsg.create(`Welcome Msg: ${this.title}`));
+    yield putResolve(this.welcomeMsg.create(`Welcome Msg: ${this.title}`));
     return;
   }
 

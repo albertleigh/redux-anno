@@ -1,5 +1,4 @@
-import {Model, MODEL_TYPE, InsTyp, AnyClass, Saga, Self, createSelf, getContext} from 'redux-anno';
-import {putResolve} from 'redux-saga/effects';
+import {AnyClass, getContext, InsTyp, Model, MODEL_TYPE, Saga, SAGA_TYPE} from 'redux-anno';
 import {BaseStackViewManager} from 'redux-anno-utils/lib/examples/StackViews/StackViewManager';
 import {MAIN_VIEW_TYPE, MainBaseView} from 'src/stores/MainViews/base';
 import SvgIcon from '@material-ui/core/SvgIcon';
@@ -46,7 +45,7 @@ export const mainViewOptions: MainViewOption[] = [
 ];
 
 @Model(MODEL_TYPE.SINGLETON)
-export class MainViewManager extends BaseStackViewManager<MainBaseView> {
+export class MainViewManager extends BaseStackViewManager<AnyClass<MainBaseView>> {
   *onPageAdded(_ins: InsTyp<AnyClass<MainBaseView>>): Generator<any, any, any> {
     console.log('[StackedViewManger::onPageAdded]', _ins);
     return;
@@ -57,7 +56,13 @@ export class MainViewManager extends BaseStackViewManager<MainBaseView> {
     return;
   }
 
-  @Self self = createSelf(MainViewManager);
+  @Saga(SAGA_TYPE.AUTO_RUN)
+  *entry() {
+    yield* this.redirectTo({
+      model: StackedViewDemo,
+      args: [],
+    });
+  }
 
   @Saga()
   *redirectToOneMainView<C extends AnyClass<MainBaseView>>(payload: {

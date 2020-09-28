@@ -4,6 +4,10 @@ const fs = require('fs');
 const readline = require('readline');
 const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 
+function copyFiles(){
+    fs.copyFileSync(path.resolve("../../README.md"), path.resolve("./README.md"));
+}
+
 function updateNextTag() {
 
     // read package.json from the current working directory
@@ -32,4 +36,5 @@ function updateNextTag() {
     });
 }
 
+copyFiles();
 updateNextTag();

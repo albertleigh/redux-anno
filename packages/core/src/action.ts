@@ -19,7 +19,7 @@ export interface FullActionHelper<TPayload = any, TResult = any> {
   dispatch(payload: TPayload): Promise<TResult>;
 }
 
-export interface StateActionHelper<TPayload = any, TResult = any> extends FullActionHelper<TPayload, TResult> {
+export interface StateActionHelper<TPayload = any> extends FullActionHelper<TPayload, void> {
   value: TPayload;
 }
 

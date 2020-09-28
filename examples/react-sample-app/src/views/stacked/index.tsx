@@ -18,8 +18,8 @@ export const StackedView = React.memo(() => {
     await viewMgr.addStepView.dispatch(0);
   }, [viewMgr]);
 
-  const current = useSelector(() => viewMgr.current);
-  const items = useSelector(() => viewMgr.items);
+  const current = useSelector(() => viewMgr.current.value);
+  const items = useSelector(() => viewMgr.items.value);
 
   return (
     <div className={style.mainView}>

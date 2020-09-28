@@ -17,9 +17,9 @@ export const StepPanel: React.FC<Props> = React.memo<Props>((props) => {
   const {onSetToCurrent, onClose, item} = props;
 
   const title = useSelector(() => item.title);
-  const stepMsg = useSelector(() => item.stepMsg);
-  const step = useSelector(() => item.step);
-  const stepCounter = useSelector(() => item.stepCounter);
+  const stepMsg = useSelector(() => item.stepMsg.value);
+  const step = useSelector(() => item.step.value);
+  const stepCounter = useSelector(() => item.stepCounter.value);
 
   const handleAddStep = useCallback(async () => {
     await viewMgr.addStepView.dispatch(step + 1);

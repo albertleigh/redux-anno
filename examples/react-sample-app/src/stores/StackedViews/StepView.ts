@@ -1,4 +1,4 @@
-import {Model, MODEL_TYPE, Self, createSelf, State, createState, Saga} from 'redux-anno';
+import {Model, MODEL_TYPE, State, createState, Saga} from 'redux-anno';
 import {put} from 'redux-saga/effects';
 import {BaseView, VIEW_TYPE} from './BaseView';
 
@@ -10,16 +10,14 @@ export class StepView extends BaseView {
   @State step = createState<number>(-1);
   @State stepCounter = createState<number>(-1);
 
-  @Self self = createSelf(StepView);
-
   constructor(title: string, private initStep: number) {
     super(title);
   }
 
   *onPostEnter() {
-    yield put(this.self.stepMsg.create(`StepView Msg: ${this.title}`));
-    yield put(this.self.step.create(this.initStep));
-    yield put(this.self.stepCounter.create(this.initStep));
+    yield put(this.stepMsg.create(`StepView Msg: ${this.title}`));
+    yield put(this.step.create(this.initStep));
+    yield put(this.stepCounter.create(this.initStep));
     return;
   }
 
@@ -30,6 +28,6 @@ export class StepView extends BaseView {
 
   @Saga()
   *updateStepCounter(nextCounter: number) {
-    yield put(this.self.stepCounter.create(nextCounter));
+    yield put(this.stepCounter.create(nextCounter));
   }
 }

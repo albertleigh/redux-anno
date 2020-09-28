@@ -48,7 +48,7 @@ export const MainViewSwitcher = React.memo(() => {
   const defaultCtx = useMemo(getContext, []);
   const mainViewMgr = defaultCtx.getOneInstance(MainViewManager);
 
-  const viewItems = useSelector(() => mainViewMgr.items);
+  const viewItems = useSelector(() => mainViewMgr.items.value);
   const length = useMemo(() => viewItems.length, [viewItems]);
 
   return <>{!!length ? getMainViewItem(viewItems[length - 1]) : <EmptyOverlay />}</>;

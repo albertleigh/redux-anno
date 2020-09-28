@@ -6,11 +6,11 @@ export function notNull<T = any>(obj: T, preset: T): T {
   return (!!obj && obj) || preset;
 }
 
-export interface AnyClass<T = any> {
-  new (...args: any[]): T;
-}
+export type AnyClass<T = any> = {
+  new (...args: any[] | any): T;
+};
 
-export type KeysOfType<TTarget extends any, TValue> = {
+export type KeysOfType<TTarget, TValue> = {
   [K in keyof TTarget]: TTarget[K] extends TValue ? K : never;
 }[keyof TTarget];
 

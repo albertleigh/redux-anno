@@ -17,8 +17,8 @@ class PrototypeChildModel {
 
   @Saga()
   *setProtoChildFields(nextState: number) {
-    yield putResolve(this.self.protoNum.create(nextState));
-    yield putResolve(this.self.protoStr.create(`ProtoStr ${nextState}`));
+    yield putResolve(this.protoNum.create(nextState));
+    yield putResolve(this.protoStr.create(`ProtoStr ${nextState}`));
     return 'got proto child updated';
   }
 }
@@ -34,8 +34,8 @@ class StaticChildModel {
 
   @Saga()
   *setStateChildFields(nextState: number) {
-    yield putResolve(this.self.statNum.create(nextState));
-    yield putResolve(this.self.statStr.create(`StatStr ${nextState}`));
+    yield putResolve(this.statNum.create(nextState));
+    yield putResolve(this.statStr.create(`StatStr ${nextState}`));
     return 'got static child updated';
   }
 }
@@ -52,8 +52,8 @@ class PapaModel {
 
   @Saga()
   *setPapaFields(nextState: number) {
-    yield putResolve(this.self.papaNum.create(nextState));
-    yield putResolve(this.self.papaStr.create(`StatStr ${nextState}`));
+    yield putResolve(this.papaNum.create(nextState));
+    yield putResolve(this.papaStr.create(`StatStr ${nextState}`));
     return 'got papa child updated';
   }
 }
@@ -73,16 +73,16 @@ describe('ModelWithInstances', () => {
     expect(papaInst.staticChild).toBeTruthy();
     expect(papaInst.dynamicChild).toBeTruthy();
 
-    expect(papaInst.staticChild.statNum).toBe(0);
-    expect(papaInst.staticChild.statStr).toBe(undefined);
+    expect(papaInst.staticChild.statNum.value).toBe(0);
+    expect(papaInst.staticChild.statStr.value).toBe(undefined);
     await papaInst.staticChild.setStateChildFields.dispatch(1);
-    expect(papaInst.staticChild.statNum).toBe(1);
-    expect(papaInst.staticChild.statStr).toBe('StatStr 1');
+    expect(papaInst.staticChild.statNum.value).toBe(1);
+    expect(papaInst.staticChild.statStr.value).toBe('StatStr 1');
 
-    expect(papaInst.dynamicChild.protoNum).toBe(0);
-    expect(papaInst.dynamicChild.protoStr).toBe(undefined);
+    expect(papaInst.dynamicChild.protoNum.value).toBe(0);
+    expect(papaInst.dynamicChild.protoStr.value).toBe(undefined);
     await papaInst.dynamicChild.setProtoChildFields.dispatch(2);
-    expect(papaInst.dynamicChild.protoNum).toBe(2);
-    expect(papaInst.dynamicChild.protoStr).toBe('ProtoStr 2');
+    expect(papaInst.dynamicChild.protoNum.value).toBe(2);
+    expect(papaInst.dynamicChild.protoStr.value).toBe('ProtoStr 2');
   });
 });

@@ -332,9 +332,7 @@ class AnnoContextManager {
       throw new ModelNotFound(`Model ${modelName} is not found or invalid`);
     }
     args = args || [];
-    const theInstance = new InstanceConstructor(...(args as ConstructorParameters<InstancedConstructor<C>>)) as InsTyp<
-      C
-    >;
+    const theInstance = (new InstanceConstructor(...(args as any)) as unknown) as InsTyp<C>;
     theAnnoCtx.addOneInstance(theInstance);
 
     theAnnoCtx.store.dispatch(

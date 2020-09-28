@@ -6,7 +6,7 @@ import {WelcomeView} from './WelcomeView';
 import {StepView} from './StepView';
 
 @Model(MODEL_TYPE.SINGLETON)
-export class StackedViewManager extends BaseStackViewManager<BaseView> {
+export class StackedViewManager extends BaseStackViewManager<AnyClass<BaseView>> {
   *onPageAdded(_ins: InsTyp<AnyClass<BaseView>>): Generator<any, any, any> {
     console.log('[StackedViewManger::onPageAdded]', _ins);
     return;
@@ -25,7 +25,7 @@ export class StackedViewManager extends BaseStackViewManager<BaseView> {
       model: WelcomeView,
       args: [],
     });
-    yield putResolve(this.self.current.create(this.length - 1));
+    yield putResolve(this.current.create(this.length - 1));
   }
 
   @Saga()
@@ -34,7 +34,7 @@ export class StackedViewManager extends BaseStackViewManager<BaseView> {
       model: StepView,
       args: [`Step ${stepNum}`, stepNum],
     });
-    yield putResolve(this.self.current.create(this.length - 1));
+    yield putResolve(this.current.create(this.length - 1));
   }
 }
 export default StackedViewManager;

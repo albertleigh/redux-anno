@@ -1,5 +1,5 @@
 import {DELETE_STATE_VALUE, _InnerStateField, STATE_ADDL_FIELD, STATE_KEYS_FIELD} from './base';
-import {implementActionHelper} from './action';
+import {StateActionHelper, implementActionHelper} from './action';
 import {AnyClass, KeysOfType, isObject, prePopulateSetFieldViaPrototype, Proto} from './utils';
 import {NonObjectStateFound} from './errors';
 
@@ -52,7 +52,7 @@ export interface IsAnnoStateField {
   [STATE_ADDL_FIELD]: '__anno_state';
 }
 
-export type StateField<T = unknown> = T & IsAnnoStateField;
+export type StateField<T = unknown> = IsAnnoStateField & StateActionHelper<T>;
 
 export function createState<TState, _TModel extends AnyClass = any>(state?: TState): StateField<TState>;
 export function createState<TState, TModel extends AnyClass = any>(
@@ -71,6 +71,7 @@ export function createState<TState, TModel extends AnyClass = any>(...args: any[
       state: args[0],
     };
   }
+  // todo: infer primitive types
   return (innerStateField as unknown) as StateField<TState>;
 }
 
@@ -90,15 +91,11 @@ export function State<TKey extends string, TTarget extends {[K in TKey]: IsAnnoS
   implementActionHelper(target.constructor as any, propertyKey);
 }
 
-export type TransformState<T extends Record<string | number, any>> = {
-  [P in keyof T]: T[P] extends StateField<infer A> ? A : T[P];
-} & {
-  [STATE_KEYS_FIELD]: Pick<T, KeysOfType<T, StateField>>;
+export type TransformState<T extends Record<string | number, any>> = T & {
+  [STATE_KEYS_FIELD]: Pick<T, KeysOfType<T, IsAnnoStateField>>;
 };
 
-export type WithStates<T extends AnyClass> = {
-  [K in keyof T]: T[K];
-} & {
+export type WithStates<T extends AnyClass> = T & {
   new (...args: ConstructorParameters<T>): TransformState<InstanceType<T>>;
 };
 
@@ -116,11 +113,15 @@ export function withStates<TModel extends AnyClass>(PreWrappedModel: TModel): Wi
   return (ModelWithStates as unknown) as WithStates<TModel>;
 }
 
-export type HasStates = {[STATE_KEYS_FIELD]: any};
-export type StateKeys<T extends HasStates> = keyof T[typeof STATE_KEYS_FIELD];
-export function getStateProperty<TModel extends HasStates, TKey extends StateKeys<TModel>>(model: TModel, key: TKey) {
-  return model[key];
+export type InsHasStates = {[STATE_KEYS_FIELD]: any};
+export type StateKeys<T extends InsHasStates> = keyof T[typeof STATE_KEYS_FIELD];
+export function getStateProperty<TIns extends InsHasStates, TKey extends StateKeys<TIns>>(instance: TIns, key: TKey) {
+  return instance[key];
 }
-export type ModelSates<TModel extends any> = {
-  [K in KeysOfType<TModel, StateField>]: TModel[K] extends StateField<infer V> ? V : never;
-};
+
+export type ModelSates<TModel extends any> = Pick<
+  {
+    [K in keyof TModel]: TModel[K] extends IsAnnoStateField & StateField<infer V> ? V : never;
+  },
+  {[K in keyof TModel]: TModel[K] extends IsAnnoStateField ? K : never}[keyof TModel]
+>;

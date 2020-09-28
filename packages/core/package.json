@@ -1,6 +1,6 @@
 {
   "name": "redux-anno",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "A middleware leverages certain boilerplate while using redux",
   "scripts": {
     "clean": "node ./scripts/clean.js",
@@ -15,7 +15,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "ssh://git@git.albertli90.com:9022/msft-sh/redux-anno.git"
+    "url": "git@github.com:albertleigh/redux-anno.git"
   },
   "keywords": [
     "redux",
@@ -49,5 +49,6 @@
     "typescript": "^4.0.2",
     "webpack": "^4.44.1",
     "webpack-cli": "^3.3.12"
-  }
+  },
+  "gitHead": "08c4ab9e8e07d649e324640b3ebacd24d5a3ef09"
 }

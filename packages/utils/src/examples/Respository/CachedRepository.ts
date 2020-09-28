@@ -1,6 +1,15 @@
-import {createState, State, Reducer, ModelSates, Saga, createSelf, Self, Model} from 'redux-anno';
+import {createState, State, Reducer, Saga, Model, createReducer} from 'redux-anno';
 import {BaseRepository} from './BaseRepository';
 import {apply, putResolve} from 'redux-saga/effects';
+
+// import {ModelSates} from 'redux-anno'
+// ModelSates<CachedRepository<T>>
+interface State {
+  timestampById: Record<string, number>;
+  expiredTimestampById: Record<string, number>;
+  readingTimestampById: Record<string, number | undefined | null>;
+  writingTimestampById: Record<string, number | undefined | null>;
+}
 
 export interface IdsOfOneTimestamp {
   ids: string[];
@@ -13,33 +22,29 @@ export interface ItemsOfOneTimestamp<T> {
 }
 
 @Model()
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
 export class CachedRepository<T> extends BaseRepository<T> {
-  @Self self = createSelf(CachedRepository);
-
   @State timestampById = createState<Record<string, number>>({});
   @State expiredTimestampById = createState<Record<string, number>>({});
   @State readingTimestampById = createState<Record<string, number | undefined | null>>({});
   @State writingTimestampById = createState<Record<string, number | undefined | null>>({});
 
   getTimestampById(id: string): number {
-    const timestampById = this.self.timestampById.value;
+    const timestampById = this.timestampById.value;
     return timestampById[id] || 0;
   }
 
   getExpiredTimestampById(id: string): number {
-    const expiredTimestampById = this.self.expiredTimestampById.value;
+    const expiredTimestampById = this.expiredTimestampById.value;
     return expiredTimestampById[id] || 0;
   }
 
   geReadingTimestampById(id: string): number {
-    const readingTimestampById = this.self.readingTimestampById.value;
+    const readingTimestampById = this.readingTimestampById.value;
     return readingTimestampById[id] || 0;
   }
 
   getWritingTimestampById(id: string): number {
-    const writingTimestampById = this.self.writingTimestampById.value;
+    const writingTimestampById = this.writingTimestampById.value;
     return writingTimestampById[id] || 0;
   }
 
@@ -50,10 +55,10 @@ export class CachedRepository<T> extends BaseRepository<T> {
     );
   }
 
-  @Reducer<CachedRepository<T>>()
-  updateTimestamps(preState: ModelSates<CachedRepository<T>>, payload: IdsOfOneTimestamp) {
+  @Reducer
+  updateTimestamps = createReducer((preState: State, payload: IdsOfOneTimestamp) => {
     const {ids, timestamp} = payload;
-    const timestampById = {...this.self.timestampById.value};
+    const timestampById = {...this.timestampById.value};
     for (const id of ids) {
       timestampById[id] = timestamp;
     }
@@ -61,12 +66,12 @@ export class CachedRepository<T> extends BaseRepository<T> {
       ...preState,
       timestampById,
     };
-  }
+  });
 
-  @Reducer<CachedRepository<T>>()
-  updateExpiredTimestamps(preState: ModelSates<CachedRepository<T>>, payload: IdsOfOneTimestamp) {
+  @Reducer
+  updateExpiredTimestamps = createReducer((preState: State, payload: IdsOfOneTimestamp) => {
     const {ids, timestamp} = payload;
-    const expiredTimestampById = {...this.self.expiredTimestampById.value};
+    const expiredTimestampById = {...this.expiredTimestampById.value};
     for (const id of ids) {
       expiredTimestampById[id] = timestamp;
     }
@@ -74,12 +79,12 @@ export class CachedRepository<T> extends BaseRepository<T> {
       ...preState,
       expiredTimestampById,
     };
-  }
+  });
 
-  @Reducer<CachedRepository<T>>()
-  updateReadingTimestamps(preState: ModelSates<CachedRepository<T>>, payload: IdsOfOneTimestamp) {
+  @Reducer
+  updateReadingTimestamps = createReducer((preState: State, payload: IdsOfOneTimestamp) => {
     const {ids, timestamp} = payload;
-    const readingTimestampById = {...this.self.readingTimestampById.value};
+    const readingTimestampById = {...this.readingTimestampById.value};
     for (const id of ids) {
       readingTimestampById[id] = timestamp;
     }
@@ -87,12 +92,12 @@ export class CachedRepository<T> extends BaseRepository<T> {
       ...preState,
       readingTimestampById,
     };
-  }
+  });
 
-  @Reducer<CachedRepository<T>>()
-  updateWritingTimestamps(preState: ModelSates<CachedRepository<T>>, payload: IdsOfOneTimestamp) {
+  @Reducer
+  updateWritingTimestamps = createReducer((preState: State, payload: IdsOfOneTimestamp) => {
     const {ids, timestamp} = payload;
-    const writingTimestampById = {...this.self.writingTimestampById.value};
+    const writingTimestampById = {...this.writingTimestampById.value};
     for (const id of ids) {
       writingTimestampById[id] = timestamp;
     }
@@ -100,7 +105,7 @@ export class CachedRepository<T> extends BaseRepository<T> {
       ...preState,
       writingTimestampById,
     };
-  }
+  });
 
   /**
    *  Returns the ids needed to be read and the timestamp
@@ -115,7 +120,7 @@ export class CachedRepository<T> extends BaseRepository<T> {
 
     const idsToRead = overwriteByForce ? ids : ids.filter((one) => this.isExpiredById(one));
     yield putResolve(
-      this.self.updateReadingTimestamps.create({
+      this.updateReadingTimestamps.create({
         ids: idsToRead,
         timestamp,
       })
@@ -134,7 +139,7 @@ export class CachedRepository<T> extends BaseRepository<T> {
   @Saga()
   *finishReading(payload: ItemsOfOneTimestamp<T>) {
     const {timestamp} = payload;
-    const readingTimestampIds = Object.entries(this.self.readingTimestampById.value)
+    const readingTimestampIds = Object.entries(this.readingTimestampById.value)
       .filter(([_id, time]) => time === timestamp)
       .map(([id]) => id);
     try {
@@ -149,7 +154,7 @@ export class CachedRepository<T> extends BaseRepository<T> {
       });
       yield apply(this as any, 'updateItems', items);
       yield putResolve(
-        this.self.updateTimestamps.create({
+        this.updateTimestamps.create({
           ids,
           timestamp,
         })
@@ -161,7 +166,7 @@ export class CachedRepository<T> extends BaseRepository<T> {
       };
     } finally {
       yield putResolve(
-        this.self.updateReadingTimestamps.create({
+        this.updateReadingTimestamps.create({
           ids: readingTimestampIds,
           timestamp,
         })
@@ -182,7 +187,7 @@ export class CachedRepository<T> extends BaseRepository<T> {
       throw 'Cannot Write to the same id multiple times';
     }
     const results = {ids, timestamp};
-    yield putResolve(this.self.updateWritingTimestamps.create(results));
+    yield putResolve(this.updateWritingTimestamps.create(results));
     return results;
   }
 
@@ -193,7 +198,7 @@ export class CachedRepository<T> extends BaseRepository<T> {
   @Saga()
   *finishWriting(payload: ItemsOfOneTimestamp<T>) {
     const {timestamp} = payload;
-    const writingTimestampIds = Object.entries(this.self.writingTimestampById.value)
+    const writingTimestampIds = Object.entries(this.writingTimestampById.value)
       .filter(([_id, time]) => time === timestamp)
       .map(([id]) => id);
 
@@ -209,7 +214,7 @@ export class CachedRepository<T> extends BaseRepository<T> {
       });
       yield apply(this as any, 'updateItems', items);
       yield putResolve(
-        this.self.updateTimestamps.create({
+        this.updateTimestamps.create({
           ids,
           timestamp,
         })
@@ -221,7 +226,7 @@ export class CachedRepository<T> extends BaseRepository<T> {
       };
     } finally {
       yield putResolve(
-        this.self.updateWritingTimestamps.create({
+        this.updateWritingTimestamps.create({
           ids: writingTimestampIds,
           timestamp,
         })
@@ -234,6 +239,6 @@ export class CachedRepository<T> extends BaseRepository<T> {
    * @param items
    */
   async updateItems(items: T[]) {
-    await this.self.doUpdate.dispatch(items);
+    await this.doUpdate.dispatch(items);
   }
 }

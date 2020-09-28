@@ -1,17 +1,17 @@
 import {Saga as ReduxSaga, StrictEffect} from '@redux-saga/types';
 import {getContext} from './AnnoContext';
 import {all, cancel, fork, spawn, take, takeEvery, takeLatest, takeLeading} from 'redux-saga/effects';
-import {annoActionMethod, SAGA_TYPE, SAGA_KEYS_FIELD, AsImdAnnoInst} from './base';
+import {annoActionMethod, AsImdAnnoInst, SAGA_KEYS_FIELD, SAGA_TYPE, SagaKeysField} from './base';
 import {
-  ActionHelper,
   Action,
+  ActionHelper,
   implementActionHelper,
   registerActionHelper,
   RegisterOption,
   unregisterActionHelper,
   UnRegisterOption,
 } from './action';
-import {AnyClass, KeysOfType, Proto, prePopulateMapFieldViaPrototype} from './utils';
+import {AnyClass, KeysOfType, prePopulateMapFieldViaPrototype, Proto} from './utils';
 
 export type SagaField<TPayload = any, TResult = any> =
   | ((payload: TPayload) => Generator<StrictEffect | any, TResult>)
@@ -27,7 +27,7 @@ export type ExtractSagaFieldResult<T> = T extends
   ? _TResult
   : unknown;
 
-export function Saga(type: SAGA_TYPE = SAGA_TYPE.TAKE_EVERY) {
+export function Saga(type: SAGA_TYPE = SAGA_TYPE.TAKE_EVERY, customActionType: string | undefined = undefined) {
   return function <TKey extends string, TTarget extends {[K in TKey]: SagaField}>(
     target: TTarget,
     propertyKey: TKey
@@ -36,7 +36,7 @@ export function Saga(type: SAGA_TYPE = SAGA_TYPE.TAKE_EVERY) {
     const privateTarget = target as Proto<TTarget>;
     prePopulateMapFieldViaPrototype(privateTarget, SAGA_KEYS_FIELD);
 
-    privateTarget.constructor[SAGA_KEYS_FIELD].set(propertyKey, type);
+    privateTarget.constructor[SAGA_KEYS_FIELD].set(propertyKey, {type, customActionType});
     implementActionHelper(target.constructor as any, propertyKey);
   };
 }
@@ -110,8 +110,11 @@ export function rootSagaBuilder(annoCtxName?: string) {
         const reduxSagasTakenEvery: ReduxSaga[] = [];
         const reduxSagasTakenLatest: ReduxSaga[] = [];
         const reduxSagasTakenLeading: ReduxSaga[] = [];
+        const customReduxSagas: {reduxSaga: ReduxSaga; type: SAGA_TYPE; customActionType: string}[] = [];
         // todo support takeLeading takeLatest over here
-        for (const [fieldName, sagaType] of instance.constructor[SAGA_KEYS_FIELD]) {
+        for (const [fieldName, sagaKeysField] of instance.constructor[SAGA_KEYS_FIELD]) {
+          const sagaType = (sagaKeysField as SagaKeysField).type;
+          const customActionType = (sagaKeysField as SagaKeysField).customActionType;
           switch (sagaType) {
             case SAGA_TYPE.AUTO_RUN:
               entryReduxSagas.push(instance[fieldName]);
@@ -126,13 +129,17 @@ export function rootSagaBuilder(annoCtxName?: string) {
               reduxSagasTakenLeading.push(instance[fieldName]);
               break;
           }
-          if (sagaType === SAGA_TYPE.AUTO_RUN) {
-            entryReduxSagas.push(instance[fieldName]);
+          if (!!customActionType && sagaType != SAGA_TYPE.AUTO_RUN) {
+            customReduxSagas.push({
+              reduxSaga: instance[fieldName],
+              type: sagaType,
+              customActionType,
+            });
           }
         }
         yield spawn(function* () {
           const allTasks = yield all([
-            entryReduxSagas.map((reduxSaga) => fork(reduxSaga)),
+            ...entryReduxSagas.map((reduxSaga) => fork([instance, reduxSaga])),
             fork(function* () {
               for (const oneSaga of reduxSagasTakenEvery) {
                 yield takeEvery((oneSaga as any).type, sagaFieldWrapper.bind(instance, annoCtxName, oneSaga));
@@ -143,6 +150,21 @@ export function rootSagaBuilder(annoCtxName?: string) {
               for (const oneSaga of reduxSagasTakenLeading) {
                 yield takeLeading((oneSaga as any).type, sagaFieldWrapper.bind(instance, annoCtxName, oneSaga));
               }
+              for (const {reduxSaga, type, customActionType} of customReduxSagas) {
+                switch (type) {
+                  case SAGA_TYPE.TAKE_EVERY:
+                    yield takeEvery(customActionType, reduxSaga.bind(instance));
+                    break;
+                  case SAGA_TYPE.TAKE_LATEST:
+                    yield takeLatest(customActionType, reduxSaga.bind(instance));
+                    break;
+                  case SAGA_TYPE.TAKE_LEADING:
+                    yield takeLeading(customActionType, reduxSaga.bind(instance));
+                    break;
+                  default:
+                    break;
+                }
+              }
             }),
           ]);
           while (true) {
@@ -150,7 +172,7 @@ export function rootSagaBuilder(annoCtxName?: string) {
             if (
               action.payload!.some(
                 (option) =>
-                  annoCtxName == option.contextName &&
+                  ((!annoCtxName && !option.contextName) || annoCtxName == option.contextName) &&
                   instance.modelName === option.modelName &&
                   instance.modelKey === option.modelKey
               )
