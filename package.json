@@ -4,6 +4,9 @@
   "scripts": {
     "clean": "git clean -dfx",
     "postinstall": "lerna bootstrap --ci",
+    "build": "lerna run build",
+    "test": "lerna run test",
+    "test:coverage": "lerna run test:coverage",
     "lint:fix": "lerna run lint:fix",
     "prettify": "prettier --write",
     "prettify:all": "prettier --write \"./{packages,examples}/**/*.{js,jsx,ts,tsx,json}\""

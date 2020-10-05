@@ -5,6 +5,7 @@
   "scripts": {
     "clean": "node ./scripts/clean.js",
     "test": "jest",
+    "test:coverage": "jest --coverage --coverageReporters=text-lcov | coveralls",
     "build:esm": "tsc -p ./tsconfig.prod.json",
     "build:cjs": "webpack --config webpack.config.js",
     "build": "npm run clean && npm run build:cjs && npm run build:esm",
@@ -37,6 +38,7 @@
     "@types/jest": "^26.0.10",
     "@typescript-eslint/eslint-plugin": "^4.0.1",
     "@typescript-eslint/parser": "^4.0.1",
+    "coveralls": "^3.1.0",
     "eslint": "^7.8.1",
     "jest": "^26.4.2",
     "jest-environment-jsdom": "^26.3.0",

@@ -29,7 +29,7 @@ const EmptyOverlay = React.memo(() => {
   const clz = useEmptyOverlayStyle();
   return (
     <div className={clz.ctn}>
-      <img className={clsx(clz.img, 'bounce')} src={logo} />
+      <img alt="empty-overlay" className={clsx(clz.img, 'bounce')} src={logo} />
     </div>
   );
 });
