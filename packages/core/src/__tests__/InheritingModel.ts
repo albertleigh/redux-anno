@@ -22,7 +22,7 @@ interface PapaState {
 }
 class PapaModel extends GrandPaModel {
   @State parentNum = createState<number>();
-  @State parentStr = createState('str0' as string);
+  @State parentStr = createState('str0');
 
   @Self self = createSelf(PapaModel);
   @Self papaSelf = createSelf(PapaModel);
@@ -50,8 +50,8 @@ interface ChildState {
 }
 @Model()
 class ChildModel extends PapaModel {
-  @State oneStateNum = createState<number>();
-  @State oneStateStr = createState('str0' as string);
+  @State oneStateNum = createState((undefined as unknown) as number);
+  @State oneStateStr = createState('str0');
 
   nonStateNum: number;
   nonStateArr: Array<string>;

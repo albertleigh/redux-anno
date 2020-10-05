@@ -30,9 +30,6 @@ export interface AnnoStoreOptions extends AnnoContextOption {
  */
 export interface ReduxAnnoStoreContext {
   store: Store;
-  // registerModels: (models: Models) => void;
-  // getContainer: GetContainer;
-  // getState: GetState;
   reload: (state?: any) => void;
   // gc: (filterFn?: (container: Container) => boolean) => void;
 }
@@ -47,6 +44,8 @@ function initOneReduxAnnoContext(annoCtxName: string | undefined, option: AnnoCo
   const rootReducer = createReduxReducer(annoCtxName);
   const theAnnoCtx = getContext(annoCtxName);
   const middleware = createMiddleware(annoCtxName);
+
+  theAnnoCtx.option = option;
 
   if (!!storeCreator) {
     theAnnoCtx.store = storeCreator(rootReducer, middleware, rootSagaBuilder(annoCtxName));

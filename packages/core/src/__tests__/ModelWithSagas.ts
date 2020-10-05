@@ -8,8 +8,8 @@ import {getContext} from '../AnnoContext';
 
 @Model(MODEL_TYPE.SINGLETON)
 class OneStaticModel {
-  @State statNum = createState<number>(0);
-  @State statStr = createState<string>();
+  @State statNum = createState(0);
+  @State statStr = createState('');
 
   constructor(private argNum: number) {}
 
