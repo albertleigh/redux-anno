@@ -1,6 +1,6 @@
 {
   "name": "redux-anno",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "A middleware leverages certain boilerplate while using redux",
   "scripts": {
     "clean": "node ./scripts/clean.js",
@@ -52,5 +52,5 @@
     "webpack": "^4.44.1",
     "webpack-cli": "^3.3.12"
   },
-  "gitHead": "08c4ab9e8e07d649e324640b3ebacd24d5a3ef09"
+  "gitHead": "f8e1b3995ad718ccf85c90103b63400ae16b740b"
 }

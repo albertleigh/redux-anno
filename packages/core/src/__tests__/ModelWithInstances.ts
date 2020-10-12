@@ -10,7 +10,7 @@ import {getContext} from '../AnnoContext';
 
 @Model(MODEL_TYPE.PROTOTYPE)
 class PrototypeChildModel {
-  @State protoNum = createState<number>(0);
+  @State protoNum = createState(0);
   @State protoStr = createState<string>();
 
   @Self self = createSelf(PrototypeChildModel);
@@ -25,7 +25,7 @@ class PrototypeChildModel {
 
 @Model(MODEL_TYPE.SINGLETON)
 class StaticChildModel {
-  @State statNum = createState<number>(0);
+  @State statNum = createState(0);
   @State statStr = createState<string>();
 
   constructor(private argNum: number) {}
@@ -42,7 +42,7 @@ class StaticChildModel {
 
 @Model()
 class PapaModel {
-  @State papaNum = createState<number>(0);
+  @State papaNum = createState(0);
   @State papaStr = createState<string>();
 
   @Instance staticChild = createInstance(StaticChildModel, [1]);

@@ -1,0 +1,5 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Demo Saga hybrid model: hybrid model sagaTaskV1 response 1`] = `"thunk task v1 cleared"`;
+
+exports[`Demo Saga hybrid model: hybrid model thunkTaskV2 response 1`] = `"saga task v2 cleared"`;

@@ -8,41 +8,49 @@ import {isObject} from './utils';
 export function createMiddleware(annoCtxName?: string): Middleware {
   const curAnnoCtx = getContext(annoCtxName);
 
-  return (store) => (next) => (action) => {
-    function reload(options: ReloadOption) {
-      curAnnoCtx.clearInstanceMap();
-      // todo clean up instanceByKey
+  return (_store) => (next) => (action) => {
+    function reload(options: ReloadOption | undefined) {
       const rootState = !!options && !!options.state ? options.state : curAnnoCtx.store.getState();
-
-      const unregisterOptions: UnRegisterOption[] = [];
+      curAnnoCtx.clearInstanceMap();
       if (isObject(rootState)) {
         curAnnoCtx.getAllModelMeta().forEach((oneModelMeta) => {
           const modelState = rootState[oneModelMeta.name];
           switch (oneModelMeta.type) {
             case MODEL_TYPE.SINGLETON:
-              instantiate(oneModelMeta.modelConstructor);
+              // instancing the singleton
+              if (!!modelState) {
+                instantiate(oneModelMeta.modelConstructor, [], modelState, annoCtxName);
+              }
               break;
             case MODEL_TYPE.PROTOTYPE:
-            case MODEL_TYPE.MANUALLY:
               // need to remove those prototype and manually handled state
               Object.keys(modelState)
                 .filter((one) => IdGenerator.isId(one))
                 .forEach((oneKey) => {
-                  unregisterOptions.push({
-                    contextName: annoCtxName,
-                    modelName: oneModelMeta.name,
-                    modelKey: oneKey,
-                  });
+                  instantiate(oneModelMeta.modelConstructor, [], modelState[oneKey], annoCtxName, oneKey);
                 });
+              break;
+            case MODEL_TYPE.MANUALLY:
+              // todo decide it is singleton or prototype
+              if (Object.keys(modelState).some((one) => IdGenerator.isId(one))) {
+                Object.keys(modelState)
+                  .filter((one) => IdGenerator.isId(one))
+                  .forEach((oneKey) => {
+                    instantiate(oneModelMeta.modelConstructor, [], modelState[oneKey], annoCtxName, oneKey);
+                  });
+              } else {
+                if (!!modelState) {
+                  instantiate(oneModelMeta.modelConstructor, [], modelState, annoCtxName);
+                }
+              }
               break;
           }
         });
       }
-      !!unregisterOptions.length && store.dispatch(unregisterActionHelper.create(unregisterOptions));
     }
 
-    if (reloadActionHelper.is(action.type)) {
-      reload(action);
+    if (reloadActionHelper.is(action)) {
+      reload(action.payload);
     }
 
     const result = next(action);

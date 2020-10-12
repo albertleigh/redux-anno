@@ -11,8 +11,8 @@ const OneCustomActionType = 'oneCustomActionType';
 
 @Model(MODEL_TYPE.SINGLETON)
 class CustomActionTypeModel {
-  @State statNum = createState<number>(0);
-  @State statStr = createState<string>();
+  @State statNum = createState(0);
+  @State statStr = createState((undefined as unknown) as string);
 
   @Saga(SAGA_TYPE.TAKE_EVERY, OneCustomActionType)
   *customSaga(act: Action<number>) {

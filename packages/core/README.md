@@ -4,6 +4,8 @@
 A middleware leverages certain boilerplate while using redux
 
 [![npm version](https://img.shields.io/npm/v/redux-anno.svg)](https://www.npmjs.com/package/redux-anno)
+[![Build Status](https://travis-ci.com/albertleigh/redux-anno.svg?branch=master)](https://travis-ci.com/albertleigh/redux-anno)
+[![Coverage Status](https://coveralls.io/repos/github/albertleigh/redux-anno/badge.svg)](https://coveralls.io/github/albertleigh/redux-anno)
 ![Code style](https://img.shields.io/badge/code_style-prettier-ff69b4.svg)
 </div>
 

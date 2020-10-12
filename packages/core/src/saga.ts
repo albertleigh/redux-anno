@@ -174,7 +174,7 @@ export function rootSagaBuilder(annoCtxName?: string) {
                 (option) =>
                   ((!annoCtxName && !option.contextName) || annoCtxName == option.contextName) &&
                   instance.modelName === option.modelName &&
-                  instance.modelKey === option.modelKey
+                  ((!instance.modelKey && !option.modelKey) || instance.modelKey === option.modelKey)
               )
             ) {
               break;

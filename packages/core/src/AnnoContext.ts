@@ -1,7 +1,7 @@
 import {Store} from 'redux';
 import {ImdAnnoConstructor, AsImdAnnoInst, ThunkPromiseHandler, MODEL_TYPE, MODEL_NAME_FIELD} from './base';
 import {AnyAction, registerActionHelper, unregisterActionHelper} from './action';
-import {AnnoStoreOptions} from './store';
+import {AnnoContextOption} from './store';
 import {ModelReducer} from './reducer';
 import {InstancedConstructor, InsTyp} from './instanced';
 import {CyclicPrototypeInstanceFound, ModelNotFound, InstanceNotFound} from './errors';
@@ -79,17 +79,11 @@ export function withAnnoContext<T extends AnyClass>(PreWrappedModel: T, contextN
 }
 
 export class AnnoContext {
-  public readonly name: string;
-  private readonly ctxMgr: AnnoContextManager;
-
-  constructor(ctxMgr: AnnoContextManager, name: string) {
-    this.ctxMgr = ctxMgr;
-    this.name = name;
-  }
+  constructor(private readonly ctxMgr: AnnoContextManager, public readonly name: string) {}
 
   // general section
   public store: Store;
-  public options: AnnoStoreOptions;
+  public option: AnnoContextOption;
 
   public rootState: any;
 
@@ -187,6 +181,7 @@ export class AnnoContext {
       oneMeta.singletonInstance = void 0;
       oneMeta.instancesByKey.clear();
     });
+    this.store.dispatch(unregisterActionHelper.create(Array.from(this.instanceMap.values())));
     this.instanceMap.clear();
   }
   public removeOneInstance(modelName: string, key?: string): AsImdAnnoInst<any> {
@@ -318,7 +313,13 @@ class AnnoContextManager {
     }
   }
 
-  instantiate<C extends AnyClass>(model: string | C, args?: any[], state?: any, contextName?: string) {
+  instantiate<C extends AnyClass>(
+    model: string | C,
+    args?: ConstructorParameters<C>,
+    state?: any,
+    contextName?: string,
+    modelKey?: string
+  ) {
     const theAnnoCtx = this.getContext(contextName);
     const InstanceConstructor = theAnnoCtx.getInstanceConstructor(model);
     const modelName =
@@ -331,8 +332,11 @@ class AnnoContextManager {
     if (!InstanceConstructor) {
       throw new ModelNotFound(`Model ${modelName} is not found or invalid`);
     }
-    args = args || [];
+    args = args || ([] as any);
     const theInstance = (new InstanceConstructor(...(args as any)) as unknown) as InsTyp<C>;
+    if (!!theInstance.modelKey && !!modelKey) {
+      theInstance.modelKey = modelKey;
+    }
     theAnnoCtx.addOneInstance(theInstance);
 
     theAnnoCtx.store.dispatch(

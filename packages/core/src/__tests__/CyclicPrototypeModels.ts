@@ -4,13 +4,13 @@ import {createState, State} from '../state';
 import {initReduxAnno} from '../store';
 import {Saga} from '../saga';
 import {putResolve} from 'redux-saga/effects';
-import {createInstance, Instance, InsTyp} from '../instanced';
+import {createInstance, Instance} from '../instanced';
 import {getContext} from '../AnnoContext';
 
 @Model(MODEL_TYPE.PROTOTYPE)
 class ProtoModel01 {
-  @State proto01Num = createState<number>(0);
-  @State proto01Str = createState<string>();
+  @State proto01Num = createState(0);
+  @State proto01Str = createState('');
 
   // @Self self = createSelf(ProtoModel01);
 
@@ -27,8 +27,8 @@ class ProtoModel01 {
 
 @Model(MODEL_TYPE.PROTOTYPE)
 class ProtoModel02 {
-  @State proto02Num = createState<number>(0);
-  @State proto02Str = createState<string>();
+  @State proto02Num = createState(0);
+  @State proto02Str = createState('');
 
   // @Self self = createSelf(ProtoModel02);
 
