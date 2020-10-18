@@ -45,3 +45,19 @@ export class CyclicPrototypeInstanceFound extends Error {
     Object.setPrototypeOf(this, CyclicPrototypeInstanceFound.prototype);
   }
 }
+
+export class CannotSetComputedValue extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = '[redux::anno] CannotSetComputedValue';
+    Object.setPrototypeOf(this, CannotSetComputedValue.prototype);
+  }
+}
+
+export class CyclicWatchedFieldsFound extends Error {
+  constructor(message: string, public edges: Array<[string, string]>) {
+    super(message);
+    this.name = '[redux::anno] CyclicWatchedFieldsFound';
+    Object.setPrototypeOf(this, CyclicWatchedFieldsFound.prototype);
+  }
+}

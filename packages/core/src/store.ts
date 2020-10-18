@@ -15,11 +15,15 @@ export interface AnnoContextOption {
   reduxInitialState?: any;
   constructorArgs?: any[];
   storeCreator?: (reducer: Reducer, middleware: Middleware, saga: Saga) => Store;
+  debounceMsToCompute?: number;
   // todo implement these
-  dependencies?: any;
-  separator?: string;
-  onUnhandledError?: (error: any, promise: Promise<any> | undefined) => void;
+  // separator?: string;
+  // onUnhandledError?: (error: any, promise: Promise<any> | undefined) => void;
 }
+
+const partialDefaultAnnoContextOption: Partial<AnnoStoreOptions> = {
+  debounceMsToCompute: 250,
+};
 
 export interface AnnoStoreOptions extends AnnoContextOption {
   contexts?: {[key: string]: AnnoContextOption};
@@ -45,7 +49,10 @@ function initOneReduxAnnoContext(annoCtxName: string | undefined, option: AnnoCo
   const theAnnoCtx = getContext(annoCtxName);
   const middleware = createMiddleware(annoCtxName);
 
-  theAnnoCtx.option = option;
+  theAnnoCtx.option = {
+    ...partialDefaultAnnoContextOption,
+    ...option,
+  };
 
   if (!!storeCreator) {
     theAnnoCtx.store = storeCreator(rootReducer, middleware, rootSagaBuilder(annoCtxName));

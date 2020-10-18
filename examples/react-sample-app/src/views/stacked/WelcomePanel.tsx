@@ -1,7 +1,7 @@
 import React from 'react';
 import {InsTyp} from 'redux-anno';
 import {useSelector} from 'react-redux';
-import {WelcomeView} from 'src/stores/StackedViews/WelcomeView';
+import {WelcomeView} from 'sample-shared-models';
 
 interface Props {
   onSetToCurrent: () => void;

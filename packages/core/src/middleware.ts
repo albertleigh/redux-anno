@@ -1,7 +1,7 @@
 import {Middleware} from 'redux';
 import IdGenerator from './id';
-import {MODEL_TYPE, REDUCER_KEYS_FIELD, STATE_KEYS_FIELD, THUNK_KEYS_FIELD} from './base';
-import {UnRegisterOption, unregisterActionHelper, reloadActionHelper, ReloadOption} from './action';
+import {MODEL_TYPE, REDUCER_KEYS_FIELD, STATE_KEYS_FIELD, THUNK_KEYS_FIELD, WATCHED_KEYS_FIELD} from './base';
+import {reloadActionHelper, ReloadOption} from './action';
 import {instantiate, getContext} from './AnnoContext';
 import {isObject} from './utils';
 
@@ -62,6 +62,8 @@ export function createMiddleware(annoCtxName?: string): Middleware {
 
       if (!!theInstance) {
         const thunkHandler = curAnnoCtx.thunkPromiseByAction.get(action);
+        const modelMeta = curAnnoCtx.getModelMeta(theInstance.modelName);
+
         if ((theInstance.constructor as any)[THUNK_KEYS_FIELD].has(fieldName)) {
           theInstance[fieldName](action.payload).then(
             (res: any) => {
@@ -76,6 +78,14 @@ export function createMiddleware(annoCtxName?: string): Middleware {
           (theInstance.constructor as any)[REDUCER_KEYS_FIELD].has(fieldName)
         ) {
           thunkHandler?.resolve(void 0);
+        }
+
+        // might need to update the computed fields
+        if (
+          (theInstance.constructor as any)[STATE_KEYS_FIELD].has(fieldName) ||
+          (theInstance.constructor as any)[WATCHED_KEYS_FIELD].has(fieldName)
+        ) {
+          modelMeta?.watchedStateDependenciesHelper.computeFieldsIfNeeded(fieldName, theInstance);
         }
       }
     }

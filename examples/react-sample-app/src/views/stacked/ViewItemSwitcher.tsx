@@ -1,13 +1,11 @@
 import React, {useMemo, useCallback} from 'react';
 import cx from 'classnames';
 import {InsTyp, AnyClass, getContext} from 'redux-anno';
-import {BaseView} from 'src/stores/StackedViews/BaseView';
-import {VIEW_TYPE} from 'src/stores/StackedViews/BaseView';
 
 import {WelcomePanel} from 'src/views/stacked/WelcomePanel';
 import {StepPanel} from 'src/views/stacked/StepPanel';
 
-import {StackedViewManager} from 'src/stores/StackedViews/StackedViewManager';
+import {BaseView, VIEW_TYPE, StackedViewManager} from 'sample-shared-models';
 
 import style from 'src/views/stacked/ViewItemSwitcher.module.scss';
 

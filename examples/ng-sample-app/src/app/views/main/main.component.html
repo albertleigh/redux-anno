@@ -1,0 +1,7 @@
+<div
+  [ngSwitch]="currentViewType"
+>
+  <app-stacked-view-demo-panel *ngSwitchCase="MAIN_VIEW_TYPE.STACKED_VIEWS_DEMO">Stacked view</app-stacked-view-demo-panel>
+  <div *ngSwitchCase="MAIN_VIEW_TYPE.CACHED_REPO_DEMO">cached view</div>
+  <div *ngSwitchDefault>default view</div>
+</div>

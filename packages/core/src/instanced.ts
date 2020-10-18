@@ -10,10 +10,14 @@ import {
   SAGA_KEYS_FIELD,
   annoActionMethod,
   THUNK_KEYS_FIELD,
+  INSTANCE_STORE_LISTENERS,
+  INSTANCE_STORE_LISTENER_UNSUBSCRIBED_CB,
+  WATCHED_KEYS_FIELD,
 } from './base';
 import IdGenerator from './id';
 import {WithStates, withStates, TransformState} from './state';
 import {WithReducers, withReducers, TransformReducer} from './reducer';
+import {WithComputed, withComputed, TransformComputed} from './computed';
 import {WithThunk, withThunk, TransformThunk} from './thunk';
 import {WithSagas, withSagas, TransformSaga} from './saga';
 import {AnyClass, KeysOfType, Proto, prePopulateSetFieldViaPrototype} from './utils';
@@ -34,7 +38,9 @@ export function Instance<TKey extends string, TTarget extends {[K in TKey]: IsAn
 }
 
 export type TransformInstance<T extends Record<string | number, any>> = T & {
-  [INSTANCE_KEYS_FIELD]: Pick<T, KeysOfType<T, IsAnnoInstanceField>>;
+  // due to error TS4029: Public property of exported class has or is using name 'INSTANCE_KEYS_FIELD' from external module "instanced" but cannot be named.
+  // cannot use INSTANCE_KEYS_FIELD over here but have to be __annoInstanceKeys__ ding ts
+  __annoInstanceKeys__: Pick<T, KeysOfType<T, IsAnnoInstanceField>>;
 };
 
 export type WithInstances<T extends AnyClass> = {
@@ -61,6 +67,11 @@ export function withInstance<TModel extends AnyClass>(PreWrappedModel: TModel): 
       self.modelKey = undefined;
     }
 
+    self[INSTANCE_STORE_LISTENERS] = {
+      reduxStoreUnsubscribe: new Set(),
+      pendingComputeByFieldName: new Map(),
+    };
+
     PreWrappedModel.apply(this, arguments as any);
 
     const curAnnoCtx = getContext(self.contextName);
@@ -68,6 +79,19 @@ export function withInstance<TModel extends AnyClass>(PreWrappedModel: TModel): 
 
     if (!selfModelMeta) {
       throw new ModelNotFound(`Failed instantiate model ${self.name} as it was not registered via annotation @Model`);
+    }
+
+    if (!selfModelMeta.watchedStateDependenciesHelper.isInitialized()) {
+      if (PreWrappedModel.prototype.constructor.hasOwnProperty(WATCHED_KEYS_FIELD)) {
+        for (const watchedStateField of PreWrappedModel.prototype.constructor[WATCHED_KEYS_FIELD]) {
+          const {dependencies} = self[watchedStateField];
+          for (const dependency of dependencies) {
+            selfModelMeta.watchedStateDependenciesHelper.addDependencies(dependency, watchedStateField);
+          }
+        }
+        selfModelMeta.watchedStateDependenciesHelper.validateCyclicWatchedFields();
+      }
+      selfModelMeta.watchedStateDependenciesHelper.initialized();
     }
 
     if (PreWrappedModel.prototype.constructor.hasOwnProperty(MODEL_SELF_KEYS_FIELD)) {
@@ -187,6 +211,18 @@ export function withInstance<TModel extends AnyClass>(PreWrappedModel: TModel): 
         }
       }
     }
+
+    self.reduxStoreSubscribe = (listener: () => void, unsubscribedCallback?: () => void) => {
+      const reduxUnsubscribe = curAnnoCtx.store.subscribe(listener);
+      (reduxUnsubscribe as any)[INSTANCE_STORE_LISTENER_UNSUBSCRIBED_CB] = unsubscribedCallback;
+      self[INSTANCE_STORE_LISTENERS].reduxStoreUnsubscribe.add(reduxUnsubscribe);
+      return () => {
+        unsubscribedCallback && unsubscribedCallback();
+        self[INSTANCE_STORE_LISTENERS].reduxStoreUnsubscribe.delete(reduxUnsubscribe);
+        reduxUnsubscribe();
+      };
+    };
+
     curAnnoCtx.validateCyclicPrototypeInstances();
   };
   ModelWithInstance.prototype = PreWrappedModel.prototype;
@@ -204,11 +240,11 @@ export function getInstanceProperty<TIns extends InsHasInstances, TKey extends I
 }
 
 export type InstancedConstructor<Model extends AnyClass> = WithInstances<
-  WithReducers<WithSagas<WithThunk<WithStates<ImdAnnoConstructor<Model>>>>>
+  WithReducers<WithComputed<WithSagas<WithThunk<WithStates<ImdAnnoConstructor<Model>>>>>>
 >;
 export function Instanced<Model extends AnyClass>(model: Model): InstancedConstructor<Model> {
   // the sequence here is critically important
-  return withInstance(withReducers(withSagas(withThunk(withStates(model as ImdAnnoConstructor<Model>)))));
+  return withInstance(withReducers(withComputed(withSagas(withThunk(withStates(model as ImdAnnoConstructor<Model>))))));
 }
 
 interface InnerInstanceParameters<TModel extends AnyClass> {
@@ -221,7 +257,7 @@ export type CreateInstanceParameters<Model extends AnyClass> = ConstructorParame
   : [Model, ConstructorParameters<Model> | (() => ConstructorParameters<Model>), state?: Record<string, any>];
 
 export type TransformClzInstance<T extends Record<string | number, any>> = TransformInstance<
-  TransformReducer<TransformSaga<TransformThunk<TransformState<T>>>>
+  TransformReducer<TransformComputed<TransformSaga<TransformThunk<TransformState<T>>>>>
 >;
 
 export function createInstance<Model extends AnyClass>(

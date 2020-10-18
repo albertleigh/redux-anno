@@ -2,7 +2,7 @@ import {applyMiddleware, compose, createStore} from 'redux';
 import {default as createSagaMiddleware} from 'redux-saga';
 import {initReduxAnno} from 'redux-anno';
 
-import Entry from './Entry';
+import {Entry} from 'sample-shared-models';
 
 const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
 
@@ -17,6 +17,9 @@ export default initReduxAnno({
     const enhancer = composeEnhancers(applyMiddleware(middleware, sagaMiddleware));
     const store = createStore(reducer, enhancer);
     sagaMiddleware.run(saga);
+
+    (window as any).store = store;
+
     return store;
   },
 });

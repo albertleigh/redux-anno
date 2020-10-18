@@ -7,6 +7,7 @@ import {
   MODEL_SELF_KEYS_FIELD,
   STATE_KEYS_FIELD,
   REDUCER_KEYS_FIELD,
+  WATCHED_KEYS_FIELD,
   THUNK_KEYS_FIELD,
   SAGA_KEYS_FIELD,
   INSTANCE_KEYS_FIELD,
@@ -82,6 +83,8 @@ export function Model(type: MODEL_TYPE = MODEL_TYPE.SINGLETON, modelName?: strin
     prePopulateConstructorSetField(_constructor, STATE_KEYS_FIELD);
     // what if gotta mod w/o reducer, better populate con reducer fields in advance
     prePopulateConstructorSetField(_constructor, REDUCER_KEYS_FIELD);
+    // what if gotta mod w/o reducer, better populate con watched fields in advance
+    prePopulateConstructorSetField(_constructor, WATCHED_KEYS_FIELD);
     // what if gotta mod w/o thunk, better populate con thunk fields in advance
     prePopulateConstructorSetField(_constructor, THUNK_KEYS_FIELD);
     // what if gotta mod w/o saga, better populate con saga fields in advance
@@ -105,7 +108,7 @@ export function Model(type: MODEL_TYPE = MODEL_TYPE.SINGLETON, modelName?: strin
     const theModelMeta = new ModelMeta(type, theModelName, constructor, InstancedConstructor);
     const reducersByFieldName = theModelMeta.reducersByFieldName;
     // populate the reducers for the model meta
-    for (const stateKey of _constructor[STATE_KEYS_FIELD] || []) {
+    for (const stateKey of new Set([..._constructor[STATE_KEYS_FIELD], ..._constructor[WATCHED_KEYS_FIELD]])) {
       reducersByFieldName.set(stateKey, (previousState, payload) => ({
         ...previousState,
         [stateKey]: payload,

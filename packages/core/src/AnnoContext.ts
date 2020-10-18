@@ -1,14 +1,88 @@
 import {Store} from 'redux';
-import {ImdAnnoConstructor, AsImdAnnoInst, ThunkPromiseHandler, MODEL_TYPE, MODEL_NAME_FIELD} from './base';
+import {
+  ImdAnnoConstructor,
+  AsImdAnnoInst,
+  ThunkPromiseHandler,
+  MODEL_TYPE,
+  MODEL_NAME_FIELD,
+  INSTANCE_STORE_LISTENERS,
+  INSTANCE_STORE_LISTENER_UNSUBSCRIBED_CB,
+  annoActionMethod,
+} from './base';
 import {AnyAction, registerActionHelper, unregisterActionHelper} from './action';
 import {AnnoContextOption} from './store';
 import {ModelReducer} from './reducer';
 import {InstancedConstructor, InsTyp} from './instanced';
-import {CyclicPrototypeInstanceFound, ModelNotFound, InstanceNotFound} from './errors';
+import {CyclicPrototypeInstanceFound, ModelNotFound, InstanceNotFound, CyclicWatchedFieldsFound} from './errors';
 import {AnyClass, Nullable} from './utils';
 import toposort from './utils/toposort';
 
 const ACTION_NAME_SEPARATOR = 'Æ';
+
+export class WatchedStateHelper {
+  private dep: Map<string, Set<string>> = new Map();
+  private _initialized = false;
+
+  constructor(private readonly modelName: string) {}
+
+  isInitialized() {
+    return this._initialized;
+  }
+
+  initialized() {
+    this._initialized = true;
+  }
+
+  addDependencies(dependentFieldName: string, fieldName: string) {
+    if (this._initialized) return;
+
+    let target: Set<string>;
+    if (!this.dep.has(dependentFieldName)) {
+      target = new Set();
+      this.dep.set(dependentFieldName, target);
+    } else {
+      target = this.dep.get(dependentFieldName)!;
+    }
+    target.add(fieldName);
+  }
+
+  computeFieldsIfNeeded(triggerField: string, self: InsTyp<any>) {
+    if (this.dep.has(triggerField)) {
+      const annoCtx = getContext(self.contextName);
+      for (const targetField of this.dep.get(triggerField)!) {
+        const pendingComputeByFieldName = self[INSTANCE_STORE_LISTENERS].pendingComputeByFieldName;
+        if (!pendingComputeByFieldName.has(targetField)) {
+          self[INSTANCE_STORE_LISTENERS].pendingComputeByFieldName.set(
+            targetField,
+            setTimeout(
+              () => {
+                self[annoActionMethod(targetField, 'dispatch')](self[targetField].creator.apply(self));
+                pendingComputeByFieldName.delete(targetField);
+              },
+              Number.isFinite(self[targetField].debounceTimeInMs)
+                ? self[targetField].debounceTimeInMs
+                : annoCtx.option.debounceMsToCompute!
+            )
+          );
+        }
+      }
+    }
+  }
+
+  validateCyclicWatchedFields() {
+    const edges: Array<[string, string]> = [];
+    for (const [dependent, fieldsSet] of this.dep) {
+      for (const field of fieldsSet) {
+        edges.push([dependent, field]);
+      }
+    }
+    try {
+      toposort(edges);
+    } catch (e) {
+      new CyclicWatchedFieldsFound(`For model ${this.modelName}  ${e.message}`, edges);
+    }
+  }
+}
 
 export interface ModelConstructors<M> {
   modelConstructor: AnyClass<M>;
@@ -20,6 +94,7 @@ interface IModelMeta<M> {
   name: string;
   modelConstructor: AnyClass<M>;
   reducersByFieldName: Map<string, ModelReducer>;
+  watchedStateDependenciesHelper: WatchedStateHelper;
 }
 
 export class ModelMeta<M> implements IModelMeta<M>, ModelConstructors<M> {
@@ -30,6 +105,7 @@ export class ModelMeta<M> implements IModelMeta<M>, ModelConstructors<M> {
   public readonly modelConstructor: AnyClass<M>;
   public readonly instancedConstructor: InstancedConstructor<AnyClass<M>> | any;
   public readonly reducersByFieldName: Map<string, ModelReducer>;
+  public readonly watchedStateDependenciesHelper: WatchedStateHelper;
 
   constructor(
     type: MODEL_TYPE,
@@ -42,6 +118,7 @@ export class ModelMeta<M> implements IModelMeta<M>, ModelConstructors<M> {
     this.modelConstructor = modelConstructor;
     this.instancedConstructor = instancedConstructor;
     this.reducersByFieldName = new Map<string, ModelReducer>();
+    this.watchedStateDependenciesHelper = new WatchedStateHelper(name);
   }
 }
 
@@ -57,6 +134,9 @@ export class DelegateModelMetaInContext<M> implements IModelMeta<M> {
   }
   public get reducersByFieldName(): Map<string, ModelReducer> {
     return this.modelMeta.reducersByFieldName;
+  }
+  public get watchedStateDependenciesHelper(): WatchedStateHelper {
+    return this.modelMeta.watchedStateDependenciesHelper;
   }
 
   public singletonInstance?: InsTyp<AnyClass<M>>;
@@ -199,10 +279,7 @@ export class AnnoContext {
     this.instanceMap.delete(theModelPath);
     return theInstanceTobeRemoved;
   }
-  public getOneInstance<Model extends AnyClass>(
-    modelOrName: string | Model,
-    key?: string
-  ): InstanceType<InstancedConstructor<ImdAnnoConstructor<Model>>> {
+  public getOneInstance<Model extends AnyClass>(modelOrName: string | Model, key?: string): InsTyp<Model> {
     const modelMeta = this.getModelMeta(modelOrName);
     if (!!modelMeta) {
       const theModelPath = AnnoContext.buildInstancePath(modelMeta.name, key);
@@ -352,8 +429,14 @@ class AnnoContextManager {
 
   disband(instance: AsImdAnnoInst<any>) {
     const annoCtx = this.getContext(instance.contextName);
+    for (const unsubscribe of instance[INSTANCE_STORE_LISTENERS]?.reduxStoreUnsubscribe) {
+      if (typeof (unsubscribe as any)[INSTANCE_STORE_LISTENER_UNSUBSCRIBED_CB] === 'function') {
+        (unsubscribe as any)[INSTANCE_STORE_LISTENER_UNSUBSCRIBED_CB]();
+      }
+      unsubscribe();
+    }
     annoCtx.store.dispatch(unregisterActionHelper.create([instance]));
-
+    instance[INSTANCE_STORE_LISTENERS]?.reduxStoreUnsubscribe?.clear();
     instance.prototype = Object.prototype;
     instance.constructor = Object.prototype.constructor;
 

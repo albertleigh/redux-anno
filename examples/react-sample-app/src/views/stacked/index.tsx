@@ -2,8 +2,9 @@ import React, {useMemo, useCallback} from 'react';
 import {getContext} from 'redux-anno';
 import {useSelector} from 'react-redux';
 import Counter from 'src/views/Counter';
-import {StackedViewManager} from 'src/stores/StackedViews/StackedViewManager';
 import {ViewItemSwitcher} from 'src/views/stacked/ViewItemSwitcher';
+
+import {StackedViewManager} from 'sample-shared-models';
 
 import style from 'src/views/stacked/index.module.scss';
 
