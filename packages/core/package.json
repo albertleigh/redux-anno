@@ -1,6 +1,6 @@
 {
   "name": "redux-anno",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "A middleware leverages certain boilerplate while using redux",
   "scripts": {
     "clean": "node ./scripts/clean.js",
