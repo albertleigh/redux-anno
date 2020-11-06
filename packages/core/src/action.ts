@@ -12,6 +12,12 @@ export interface Action<TPayload = any> {
   payload?: TPayload;
 }
 
+export interface ComputedStateAction<TPayload = any> {
+  value: TPayload;
+  type: string;
+  is(action: any): action is Action<TPayload>;
+}
+
 export interface FullActionHelper<TPayload = any, TResult = any> {
   type: string;
   is(action: any): action is Action<TPayload>;

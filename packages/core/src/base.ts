@@ -1,3 +1,4 @@
+import {Unsubscribe} from 'redux';
 import {AnyClass} from './utils';
 // global
 export const DELETE_STATE_VALUE = '__annoDeleteStateValue__' as const;
@@ -31,6 +32,10 @@ export const STATE_KEYS_FIELD = '__annoStateKeys__' as const;
 // reducer
 export const REDUCER_ADDL_FIELD = '__isAnnoReducer__' as const;
 export const REDUCER_KEYS_FIELD = '__annoReducerKeys__' as const;
+
+// watched_state
+export const WATCHED_ADDL_FIELD = '__isAnnoWatched__' as const;
+export const WATCHED_KEYS_FIELD = '__annoWatchedKeys__' as const;
 
 // thunk
 // export const THUNK_ADDL_FIELD = '__isAnnoThunk__' as const;
@@ -74,6 +79,7 @@ export interface SagaKeysField {
 export type ImdAnnoConstructor<TModel extends AnyClass> = TModel & {
   [STATE_KEYS_FIELD]?: Set<string>;
   [REDUCER_KEYS_FIELD]?: Set<string>;
+  [WATCHED_KEYS_FIELD]?: Set<string>;
   [THUNK_KEYS_FIELD]?: Set<string>;
   [SAGA_KEYS_FIELD]?: Map<string, SagaKeysField>;
   [INSTANCE_KEYS_FIELD]?: Set<string>;
@@ -82,10 +88,19 @@ export type ImdAnnoConstructor<TModel extends AnyClass> = TModel & {
   [MODEL_TYPE_FIELD]: MODEL_TYPE;
 };
 
+export const INSTANCE_STORE_LISTENERS = '__annoInstanceStoreListeners__' as const;
+export const INSTANCE_STORE_LISTENER_UNSUBSCRIBED_CB = '__annoInstanceStoreListenerUnsubscribedCb__' as const;
+export interface InstanceStoreListeners {
+  reduxStoreUnsubscribe: Set<Unsubscribe>;
+  pendingComputeByFieldName: Map<string, NodeJS.Timeout>;
+}
+
 export interface AnnoInstanceBase {
   contextName: string;
   modelName: string;
   modelKey: string;
+  reduxStoreSubscribe: (listener: () => void, unsubscribedCallback?: () => void) => () => void;
+  [INSTANCE_STORE_LISTENERS]: InstanceStoreListeners;
 }
 
 export type AsImdAnnoInst<T> = T extends AnyClass ? InstanceType<T> & AnnoInstanceBase : T & AnnoInstanceBase;

@@ -1,0 +1,28 @@
+<mat-toolbar color="primary">
+  <button
+    mat-icon-button
+    class="example-icon"
+    aria-label="Example icon-button with menu icon"
+    (click)="drawer.toggle()"
+  >
+    <mat-icon>menu</mat-icon>
+  </button>
+  <span class="example-spacer"></span>
+  <span>Redux Anno Angular Example</span>
+</mat-toolbar>
+<mat-drawer-container class="example-container">
+  <mat-drawer #drawer mode="push">
+    <mat-action-list>
+      <button mat-list-item
+        *ngFor="let one of mainViewOptions"
+        (click)="one.onClick($event); drawer.toggle()"
+      >
+        <mat-icon matListIcon>{{getMainEntryIcon(one.type.iconType)}}</mat-icon>
+        <span>{{one.type.title}}</span>
+      </button>
+    </mat-action-list>
+  </mat-drawer>
+  <mat-drawer-content class="content-container">
+    <ng-content></ng-content>
+  </mat-drawer-content>
+</mat-drawer-container>

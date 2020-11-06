@@ -3,11 +3,10 @@ import {getContext} from 'redux-anno';
 import {useSelector} from 'react-redux';
 import {makeStyles} from '@material-ui/core/styles';
 import clsx from 'clsx';
-import {MainBaseView, MAIN_VIEW_TYPE} from 'src/stores/MainViews/base';
 import {CacheRepoDemoPanel} from 'src/views/main/CacheRepoDemoPanel';
-
 import {StackedViewDemoPanel} from 'src/views/main/StackedViewDemoPanel';
-import {MainViewManager} from 'src/stores/MainViews/MainViewManager';
+
+import {MainViewManager, MainBaseView, MAIN_VIEW_TYPE} from 'sample-shared-models';
 
 import logo from 'src/logo.svg';
 

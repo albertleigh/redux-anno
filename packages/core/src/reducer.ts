@@ -4,6 +4,7 @@ import {
   DELETE_STATE_VALUE,
   _InnerStateField,
   STATE_KEYS_FIELD,
+  WATCHED_KEYS_FIELD,
   REDUCER_ADDL_FIELD,
   REDUCER_KEYS_FIELD,
   AsImdAnnoInst,
@@ -25,6 +26,7 @@ import {
 } from './action';
 import {getSubState, setSubState, ModelSates} from './state';
 import {AnyClass, KeysOfType, prePopulateSetFieldViaPrototype, Proto} from './utils';
+import {CannotSetComputedValue} from './errors';
 
 export interface IsAnnoReducerField {
   [REDUCER_ADDL_FIELD]: '__anno_reducer';
@@ -63,7 +65,9 @@ export function Reducer<
 export type TransformReducer<T extends Record<string | number, any>> = {
   [P in keyof T]: T[P] extends IsAnnoReducerField ? ActionHelper<ExtractReducerFieldPayload<T[P]>, void> : T[P];
 } & {
-  [REDUCER_KEYS_FIELD]: Pick<T, KeysOfType<T, IsAnnoReducerField>>;
+  // due to error TS4029: Public property of exported class has or is using name 'REDUCER_KEYS_FIELD' from external module "instanced" but cannot be named.
+  // cannot use REDUCER_KEYS_FIELD over here but have to be __annoReducerKeys__ ding ts
+  __annoReducerKeys__: Pick<T, KeysOfType<T, IsAnnoReducerField>>;
 };
 
 export type WithReducers<T extends AnyClass> = T & {
@@ -115,6 +119,7 @@ export function createReduxReducer(annoCtxName?: string): ReduxReducer {
               state[stateKey] = innerStateField.state;
             }
           }
+          // saga will take of care initializing the computed states
         }
         for (const stateKey of instance.constructor[STATE_KEYS_FIELD] as Set<string>) {
           const stateKeyObj: Record<string | number, any> = {};
@@ -163,6 +168,33 @@ export function createReduxReducer(annoCtxName?: string): ReduxReducer {
           Object.defineProperty(instance, stateKey, {
             value: stateKeyObj,
             enumerable: true,
+            writable: false,
+          });
+        }
+        // populate the computed handlers
+        for (const watchedKey of instance.constructor[WATCHED_KEYS_FIELD] as Set<string>) {
+          const stateKeyObj: Record<string | number, any> = instance[watchedKey];
+          Object.defineProperty(stateKeyObj, 'value', {
+            set(_val: any) {
+              throw new CannotSetComputedValue(`Cannot set the computed value: ${watchedKey}`);
+            },
+            get(): any {
+              return getSubState(
+                getContext(instance.contextName).store.getState(),
+                instance.modelName,
+                instance.modelKey
+              )?.[watchedKey];
+            },
+            enumerable: true,
+          });
+          Object.defineProperty(stateKeyObj, 'type', {
+            value: instance[annoActionMethod(watchedKey, 'type')],
+            enumerable: true,
+            writable: false,
+          });
+          Object.defineProperty(stateKeyObj, 'is', {
+            value: instance[annoActionMethod(watchedKey, 'is')].bind(instance),
+            enumerable: false,
             writable: false,
           });
         }

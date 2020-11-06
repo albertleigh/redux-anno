@@ -1,8 +1,8 @@
 import React, {useMemo, useCallback} from 'react';
 import {getContext, InsTyp} from 'redux-anno';
-import {StepView} from 'src/stores/StackedViews/StepView';
 import {useSelector} from 'react-redux';
-import {StackedViewManager} from 'src/stores/StackedViews/StackedViewManager';
+
+import {StackedViewManager, StepView} from 'sample-shared-models';
 
 interface Props {
   onSetToCurrent: () => void;

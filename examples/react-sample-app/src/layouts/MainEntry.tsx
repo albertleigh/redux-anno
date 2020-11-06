@@ -16,9 +16,27 @@ import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 
-import {mainViewOptions} from 'src/stores/MainViews/MainViewManager';
+import ViewComfyIcon from '@material-ui/icons/ViewComfy';
+import StorageIcon from '@material-ui/icons/StorageTwoTone';
+
+import {mainViewOptions, MainViewIcon, MainViewOption} from 'sample-shared-models';
 
 const drawerWidth = 240;
+
+interface MainEntryIconProp {
+  type: MainViewIcon;
+}
+const MainEntryIcon: React.FC<MainEntryIconProp> = React.memo<MainEntryIconProp>((props) => {
+  const {type} = props;
+  switch (type) {
+    case 'Storage':
+      return <StorageIcon />;
+    case 'ViewComfy':
+      return <ViewComfyIcon />;
+    default:
+      return <ViewComfyIcon />;
+  }
+});
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -133,17 +151,17 @@ export const MainEntry = React.memo((props) => {
           </div>
           <Divider />
           <List>
-            {mainViewOptions.map((one, index) => (
+            {mainViewOptions.map((one: MainViewOption, index: number) => (
               <ListItem
                 button
-                key={one.type}
+                key={one.type.title}
                 onClick={(evt: any) => {
                   one.onClick(evt);
                   handleDrawerClose();
                 }}
               >
                 <ListItemIcon>
-                  <one.icon />
+                  <MainEntryIcon type={one.type.iconType} />
                 </ListItemIcon>
                 <ListItemText primary={one.label} />
               </ListItem>

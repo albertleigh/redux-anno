@@ -2,7 +2,7 @@ import React, {useCallback, useMemo} from 'react';
 import {useSelector} from 'react-redux';
 import {getContext} from 'redux-anno';
 
-import CounterModel from '../stores/Counter';
+import {Counter as CounterModel} from 'sample-shared-models';
 
 const CounterComp = React.memo(() => {
   // todo move to hook utils

@@ -1,7 +1,7 @@
 import {Saga as ReduxSaga, StrictEffect} from '@redux-saga/types';
 import {getContext} from './AnnoContext';
-import {all, cancel, fork, spawn, take, takeEvery, takeLatest, takeLeading} from 'redux-saga/effects';
-import {annoActionMethod, AsImdAnnoInst, SAGA_KEYS_FIELD, SAGA_TYPE, SagaKeysField} from './base';
+import {all, cancel, fork, spawn, put, take, takeEvery, takeLatest, takeLeading} from 'redux-saga/effects';
+import {annoActionMethod, AsImdAnnoInst, SAGA_KEYS_FIELD, SAGA_TYPE, SagaKeysField, WATCHED_KEYS_FIELD} from './base';
 import {
   Action,
   ActionHelper,
@@ -182,6 +182,13 @@ export function rootSagaBuilder(annoCtxName?: string) {
           }
           yield all(allTasks.map((task: any) => cancel(task)));
         });
+        for (const computedField of instance.constructor[WATCHED_KEYS_FIELD]) {
+          yield put(
+            instance[annoActionMethod(computedField, 'create')](
+              (instance[computedField] as any).creator.apply(instance, [])
+            )
+          );
+        }
       }
     }
   }

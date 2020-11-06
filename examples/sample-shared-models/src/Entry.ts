@@ -1,8 +1,8 @@
 import {Model, Instance, createInstance} from 'redux-anno';
 
 import {Counter} from './Counter';
-import {MainViewManager} from 'src/stores/MainViews/MainViewManager';
-import {StackedViewManager} from 'src/stores/StackedViews/StackedViewManager';
+import {MainViewManager} from './MainViews/MainViewManager';
+import {StackedViewManager} from './StackedViews/StackedViewManager';
 
 @Model()
 export class Entry {
