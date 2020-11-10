@@ -16,8 +16,7 @@
   },
   "scripts": {
     "clean": "rimraf lib",
-    "build": "npm run clean && tsc -p ./tsconfig.json",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "npm run clean && tsc -p ./tsconfig.json"
   },
   "exports": {
     "./": "./out/"
