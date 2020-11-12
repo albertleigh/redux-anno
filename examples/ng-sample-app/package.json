@@ -1,11 +1,11 @@
 {
   "name": "ng-sample-app",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
-    "test": "ng test",
+    "_test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e"
   },
@@ -22,11 +22,11 @@
     "@angular/platform-browser-dynamic": "~10.2.0",
     "@angular/router": "~10.2.0",
     "redux": "^4.0.5",
-    "redux-anno": "^0.0.5",
-    "redux-anno-utils": "^0.0.5",
+    "redux-anno": "^0.0.6",
+    "redux-anno-utils": "^0.0.6",
     "redux-saga": "^1.1.3",
     "rxjs": "~6.6.0",
-    "sample-shared-models": "^0.0.5",
+    "sample-shared-models": "^0.0.6",
     "tslib": "^2.0.0",
     "zone.js": "~0.10.2"
   },

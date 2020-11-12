@@ -1,6 +1,6 @@
 {
   "name": "redux-anno-utils",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Utils package for redux-anno",
   "keywords": [
     "redux-anno"
@@ -26,7 +26,7 @@
   "author": "Wentao LI",
   "license": "MIT",
   "dependencies": {
-    "redux-anno": "^0.0.5"
+    "redux-anno": "^0.0.6"
   },
   "optionalDependencies": {
     "react": "^16.13.1"
@@ -49,5 +49,5 @@
     "tslib": "^2.0.1",
     "typescript": "^4.0.2"
   },
-  "gitHead": "f8e1b3995ad718ccf85c90103b63400ae16b740b"
+  "gitHead": "ee27cd818f743f586808207aaff5dea4574d7bab"
 }

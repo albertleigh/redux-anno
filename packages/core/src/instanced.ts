@@ -12,6 +12,7 @@ import {
   THUNK_KEYS_FIELD,
   INSTANCE_STORE_LISTENERS,
   INSTANCE_STORE_LISTENER_UNSUBSCRIBED_CB,
+  INSTANCE_PROTO_INS_CREATED_BY_ME,
   WATCHED_KEYS_FIELD,
 } from './base';
 import IdGenerator from './id';
@@ -71,6 +72,7 @@ export function withInstance<TModel extends AnyClass>(PreWrappedModel: TModel): 
       reduxStoreUnsubscribe: new Set(),
       pendingComputeByFieldName: new Map(),
     };
+    self[INSTANCE_PROTO_INS_CREATED_BY_ME] = new Set();
 
     PreWrappedModel.apply(this, arguments as any);
 
@@ -197,7 +199,11 @@ export function withInstance<TModel extends AnyClass>(PreWrappedModel: TModel): 
           let theInstance: any;
           Object.defineProperty(self, insField, {
             get(): any {
-              return theInstance || (theInstance = instantiate(model, theArgs, state, self.contextName));
+              if (!theInstance) {
+                self[INSTANCE_PROTO_INS_CREATED_BY_ME].add(insField);
+                theInstance = instantiate(model, theArgs, state, self.contextName);
+              }
+              return theInstance;
             },
             set(_v: any) {
               return void 0;
@@ -253,8 +259,10 @@ interface InnerInstanceParameters<TModel extends AnyClass> {
   state?: any;
 }
 export type CreateInstanceParameters<Model extends AnyClass> = ConstructorParameters<Model> extends []
-  ? [Model, state?: any]
-  : [Model, ConstructorParameters<Model> | (() => ConstructorParameters<Model>), state?: Record<string, any>];
+  ? [Model] | [Model, any]
+  :
+      | [Model, ConstructorParameters<Model> | (() => ConstructorParameters<Model>)]
+      | [Model, ConstructorParameters<Model> | (() => ConstructorParameters<Model>), Record<string, any>];
 
 export type TransformClzInstance<T extends Record<string | number, any>> = TransformInstance<
   TransformReducer<TransformComputed<TransformSaga<TransformThunk<TransformState<T>>>>>

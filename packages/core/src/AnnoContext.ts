@@ -7,6 +7,7 @@ import {
   MODEL_NAME_FIELD,
   INSTANCE_STORE_LISTENERS,
   INSTANCE_STORE_LISTENER_UNSUBSCRIBED_CB,
+  INSTANCE_PROTO_INS_CREATED_BY_ME,
   annoActionMethod,
 } from './base';
 import {AnyAction, registerActionHelper, unregisterActionHelper} from './action';
@@ -54,7 +55,7 @@ export class WatchedStateHelper {
         if (!pendingComputeByFieldName.has(targetField)) {
           self[INSTANCE_STORE_LISTENERS].pendingComputeByFieldName.set(
             targetField,
-            setTimeout(
+            window.setTimeout(
               () => {
                 self[annoActionMethod(targetField, 'dispatch')](self[targetField].creator.apply(self));
                 pendingComputeByFieldName.delete(targetField);
@@ -427,19 +428,24 @@ class AnnoContextManager {
     return theInstance;
   }
 
-  disband(instance: AsImdAnnoInst<any>) {
+  disband(instance: AsImdAnnoInst<any>, options = {disbandPrototypeChildrenCreatedByMe: true}) {
     const annoCtx = this.getContext(instance.contextName);
+    instance = annoCtx.getOneInstance(instance.modelName, instance.modelKey);
     for (const unsubscribe of instance[INSTANCE_STORE_LISTENERS]?.reduxStoreUnsubscribe) {
       if (typeof (unsubscribe as any)[INSTANCE_STORE_LISTENER_UNSUBSCRIBED_CB] === 'function') {
         (unsubscribe as any)[INSTANCE_STORE_LISTENER_UNSUBSCRIBED_CB]();
       }
       unsubscribe();
     }
+    if (!!options.disbandPrototypeChildrenCreatedByMe) {
+      for (const oneChildProtoField of instance[INSTANCE_PROTO_INS_CREATED_BY_ME]) {
+        this.disband((instance as any)[oneChildProtoField]);
+      }
+    }
     annoCtx.store.dispatch(unregisterActionHelper.create([instance]));
     instance[INSTANCE_STORE_LISTENERS]?.reduxStoreUnsubscribe?.clear();
-    instance.prototype = Object.prototype;
+    (instance as any).prototype = Object.prototype;
     instance.constructor = Object.prototype.constructor;
-
     return instance;
   }
 }

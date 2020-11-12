@@ -90,9 +90,10 @@ export type ImdAnnoConstructor<TModel extends AnyClass> = TModel & {
 
 export const INSTANCE_STORE_LISTENERS = '__annoInstanceStoreListeners__' as const;
 export const INSTANCE_STORE_LISTENER_UNSUBSCRIBED_CB = '__annoInstanceStoreListenerUnsubscribedCb__' as const;
+export const INSTANCE_PROTO_INS_CREATED_BY_ME = '__annoInstanceProtoInsCreatedByMe__' as const;
 export interface InstanceStoreListeners {
   reduxStoreUnsubscribe: Set<Unsubscribe>;
-  pendingComputeByFieldName: Map<string, NodeJS.Timeout>;
+  pendingComputeByFieldName: Map<string, number>;
 }
 
 export interface AnnoInstanceBase {
@@ -101,6 +102,7 @@ export interface AnnoInstanceBase {
   modelKey: string;
   reduxStoreSubscribe: (listener: () => void, unsubscribedCallback?: () => void) => () => void;
   [INSTANCE_STORE_LISTENERS]: InstanceStoreListeners;
+  [INSTANCE_PROTO_INS_CREATED_BY_ME]: Set<string>;
 }
 
 export type AsImdAnnoInst<T> = T extends AnyClass ? InstanceType<T> & AnnoInstanceBase : T & AnnoInstanceBase;

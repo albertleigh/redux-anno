@@ -12,8 +12,6 @@ class ProtoModel01 {
   @State proto01Num = createState(0);
   @State proto01Str = createState('');
 
-  // @Self self = createSelf(ProtoModel01);
-
   @Instance
   proto02 = createInstance(ProtoModel02);
 
@@ -29,8 +27,6 @@ class ProtoModel01 {
 class ProtoModel02 {
   @State proto02Num = createState(0);
   @State proto02Str = createState('');
-
-  // @Self self = createSelf(ProtoModel02);
 
   @Instance proto01 = createInstance(ProtoModel01);
 
