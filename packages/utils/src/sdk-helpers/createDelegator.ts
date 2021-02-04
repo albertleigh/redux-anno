@@ -21,7 +21,7 @@ import IdGenerator from './utils/IdGenerator';
 
 export type DelegatorOption = ClientDelegatorBaseOption;
 
-interface Delegator {
+export interface Delegator {
   health: ValueEventEmitter<HealthStatus>;
   clientSeq: number;
   delegateSeq: number;

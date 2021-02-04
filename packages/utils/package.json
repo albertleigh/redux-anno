@@ -8,11 +8,7 @@
   "files": [
     "lib"
   ],
-  "type": "module",
   "main": "lib/index.js",
-  "exports": {
-    "./examples/": "lib/examples/"
-  },
   "scripts": {
     "clean": "rimraf lib",
     "build": "npm run clean && tsc -p ./tsconfig.json",

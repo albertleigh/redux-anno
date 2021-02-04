@@ -11,7 +11,7 @@ export interface RepeaterOption {
   filterMessages?(data: string): boolean;
 }
 
-interface Repeater {
+export interface Repeater {
   health: ValueEventEmitter<HealthStatus>;
   close(): void;
 }

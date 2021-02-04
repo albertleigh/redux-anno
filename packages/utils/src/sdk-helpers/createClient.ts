@@ -19,7 +19,7 @@ import {ValueEventEmitter} from './utils/ValueEventEmitter';
 
 export type ClientOption = ClientDelegatorBaseOption;
 
-interface Client<T> {
+export interface Client<T> {
   health: ValueEventEmitter<HealthStatus>;
   clientSeq: number;
   delegateSeq: number;
