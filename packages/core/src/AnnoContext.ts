@@ -55,7 +55,7 @@ export class WatchedStateHelper {
         if (!pendingComputeByFieldName.has(targetField)) {
           self[INSTANCE_STORE_LISTENERS].pendingComputeByFieldName.set(
             targetField,
-            window.setTimeout(
+            setTimeout(
               () => {
                 self[annoActionMethod(targetField, 'dispatch')](self[targetField].creator.apply(self));
                 pendingComputeByFieldName.delete(targetField);

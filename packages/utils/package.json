@@ -16,6 +16,7 @@
   "scripts": {
     "clean": "rimraf lib",
     "build": "npm run clean && tsc -p ./tsconfig.json",
+    "test": "jest",
     "prepublishOnly": "npm run build",
     "postpublish": "node ./scripts/post-publish.js"
   },

@@ -30,7 +30,7 @@ class StaticChildModel {
 
   constructor(private argNum: number) {}
 
-  @Self self = createSelf(StaticChildModel);
+  // @Self self = createSelf(StaticChildModel);
 
   @Saga()
   *setStateChildFields(nextState: number) {
@@ -48,7 +48,7 @@ class PapaModel {
   @Instance staticChild = createInstance(StaticChildModel, [1]);
   @Instance dynamicChild = createInstance(PrototypeChildModel);
 
-  @Self self = createSelf(PapaModel);
+  // @Self self = createSelf(PapaModel);
 
   @Saga()
   *setPapaFields(nextState: number) {

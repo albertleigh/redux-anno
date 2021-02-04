@@ -93,7 +93,7 @@ export const INSTANCE_STORE_LISTENER_UNSUBSCRIBED_CB = '__annoInstanceStoreListe
 export const INSTANCE_PROTO_INS_CREATED_BY_ME = '__annoInstanceProtoInsCreatedByMe__' as const;
 export interface InstanceStoreListeners {
   reduxStoreUnsubscribe: Set<Unsubscribe>;
-  pendingComputeByFieldName: Map<string, number>;
+  pendingComputeByFieldName: Map<string, number | NodeJS.Timeout>;
 }
 
 export interface AnnoInstanceBase {
