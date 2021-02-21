@@ -47,7 +47,7 @@ export const mainViewOptions: MainViewOption[] = [
   },
 ];
 
-@Model(MODEL_TYPE.SINGLETON)
+@Model(MODEL_TYPE.SINGLETON, 'MainViewManager')
 export class MainViewManager extends BaseStackViewManager<AnyClass<MainBaseView>> {
   *onPageAdded(ins: InsTyp<AnyClass<MainBaseView>>): Generator<any, any, any> {
     history.pushState(ins.type.state, ins.type.title, ins.type.url);

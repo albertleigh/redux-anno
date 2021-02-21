@@ -2,7 +2,7 @@ import {Model, MODEL_TYPE, State, createState, Saga} from 'redux-anno';
 import {put} from 'redux-saga/effects';
 import {BaseView, VIEW_TYPE} from './BaseView';
 
-@Model(MODEL_TYPE.PROTOTYPE)
+@Model(MODEL_TYPE.PROTOTYPE, 'StepView')
 export class StepView extends BaseView {
   type = VIEW_TYPE.STEP_VIEW;
 

@@ -1,8 +1,8 @@
-import {Model, State, Saga, createState} from 'redux-anno';
+import {createState, Model, MODEL_TYPE, Saga, State} from 'redux-anno';
 
 import {putResolve} from 'redux-saga/effects';
 
-@Model()
+@Model(MODEL_TYPE.SINGLETON, 'Counter')
 export class Counter {
   @State
   count = createState(0 as number);

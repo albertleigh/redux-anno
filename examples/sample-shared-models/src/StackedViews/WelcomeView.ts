@@ -2,7 +2,7 @@ import {createState, Model, MODEL_TYPE, State} from 'redux-anno';
 import {putResolve} from 'redux-saga/effects';
 import {BaseView, VIEW_TYPE} from './BaseView';
 
-@Model(MODEL_TYPE.PROTOTYPE)
+@Model(MODEL_TYPE.PROTOTYPE, 'WelcomeView')
 export class WelcomeView extends BaseView {
   type = VIEW_TYPE.WELCOME_VIEW;
 
