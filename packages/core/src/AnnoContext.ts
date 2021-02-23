@@ -18,6 +18,8 @@ import {CyclicPrototypeInstanceFound, ModelNotFound, InstanceNotFound, CyclicWat
 import {AnyClass, Nullable} from './utils';
 import toposort from './utils/toposort';
 
+const AnnoCtxSymbol = Symbol.for('__AnnoCtxSymbol');
+
 const ACTION_NAME_SEPARATOR = 'Æ';
 
 export class WatchedStateHelper {
@@ -99,25 +101,15 @@ interface IModelMeta<M> {
 }
 
 export class ModelMeta<M> implements IModelMeta<M>, ModelConstructors<M> {
-  public readonly type: MODEL_TYPE;
-  public readonly name: string;
-
-  // todo type of ImdAnnoConstructor instead ?
-  public readonly modelConstructor: AnyClass<M>;
-  public readonly instancedConstructor: InstancedConstructor<AnyClass<M>> | any;
   public readonly reducersByFieldName: Map<string, ModelReducer>;
   public readonly watchedStateDependenciesHelper: WatchedStateHelper;
 
   constructor(
-    type: MODEL_TYPE,
-    name: string,
-    modelConstructor: AnyClass<M>,
-    instancedConstructor: ImdAnnoConstructor<any>
+    public readonly type: MODEL_TYPE,
+    public readonly name: string,
+    public readonly modelConstructor: AnyClass<M>,
+    public readonly instancedConstructor: ImdAnnoConstructor<any>
   ) {
-    this.type = type;
-    this.name = name;
-    this.modelConstructor = modelConstructor;
-    this.instancedConstructor = instancedConstructor;
     this.reducersByFieldName = new Map<string, ModelReducer>();
     this.watchedStateDependenciesHelper = new WatchedStateHelper(name);
   }
@@ -315,13 +307,20 @@ export class AnnoContext {
 }
 
 class AnnoContextManager {
-  static ANNO_CTX_MGR = new AnnoContextManager();
-
-  constructor() {
-    if (!!AnnoContextManager.ANNO_CTX_MGR) {
-      // internal err, no need throw a wrapped one
-      throw new Error('Cannot create multiple AnnoContextManagers');
-    }
+  static get ANNO_CTX_MGR(): AnnoContextManager {
+    const _global: any = global || window;
+    if (!_global[AnnoCtxSymbol]) __initGlobalOfAnnoCtxSymbol();
+    return _global[AnnoCtxSymbol].ANNO_CTX_MGR;
+  }
+  private get defaultCtx(): AnnoContext {
+    const _global: any = global || window;
+    if (!_global[AnnoCtxSymbol]) __initGlobalOfAnnoCtxSymbol();
+    return _global[AnnoCtxSymbol].defaultCtx;
+  }
+  private get ctxByName(): Map<string, AnnoContext> {
+    const _global: any = global || window;
+    if (!_global[AnnoCtxSymbol]) __initGlobalOfAnnoCtxSymbol();
+    return _global[AnnoCtxSymbol].ctxByName;
   }
 
   // Model section
@@ -376,9 +375,6 @@ class AnnoContextManager {
     }
     return result as Nullable<ImdAnnoConstructor<InstancedConstructor<Model>>>;
   }
-
-  private defaultCtx = new AnnoContext(this, '');
-  private ctxByName: Map<string, AnnoContext> = new Map();
 
   getContext(contextName?: string): AnnoContext {
     if (!contextName) {
@@ -450,6 +446,20 @@ class AnnoContextManager {
   }
 }
 
+function __initGlobalOfAnnoCtxSymbol() {
+  const _global: any = global || window;
+  const _globalSymbols = Object.getOwnPropertySymbols(_global);
+  const hasAnnoCtx = _globalSymbols.indexOf(AnnoCtxSymbol) > -1;
+  if (!hasAnnoCtx) {
+    const ANNO_CTX_MGR: AnnoContextManager = new AnnoContextManager();
+    _global[AnnoCtxSymbol] = {
+      ANNO_CTX_MGR,
+      defaultCtx: new AnnoContext(ANNO_CTX_MGR, ''),
+      ctxByName: new Map(),
+    };
+  }
+}
+__initGlobalOfAnnoCtxSymbol();
 const theCtxMgr = AnnoContextManager.ANNO_CTX_MGR;
 
 export function assembleActionName(modelName: string, fieldName: string, key?: string): string {

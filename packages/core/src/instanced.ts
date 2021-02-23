@@ -212,7 +212,11 @@ export function withInstance<TModel extends AnyClass>(PreWrappedModel: TModel): 
           });
         } else {
           console.warn(
-            `Failed to populate the ${insField} ${self.modelName} ${self.modelKey || ''} ${self.contextName || ''}`
+            `Failed to populate the ${insField} ${self.modelName} ${self.modelKey || ''} ${self.contextName || ''}`,
+            theModelMeta,
+            model,
+            args,
+            state
           );
         }
       }

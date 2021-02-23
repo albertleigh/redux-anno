@@ -74,6 +74,7 @@ describe('DelegatorsAndClients', () => {
   it('delegator close', async () => {
     const defaultCtx = getContext();
     const counterInst = defaultCtx.getOneInstance(Counter);
+    await counterInst.count.dispatch(0);
 
     const unsubscribe = jest.fn();
 
@@ -167,6 +168,7 @@ describe('DelegatorsAndClients', () => {
   it('client close w/ repeater', async () => {
     const defaultCtx = getContext();
     const counterInst = defaultCtx.getOneInstance(Counter);
+    await counterInst.count.dispatch(0);
 
     const unsubscribe = jest.fn();
 
