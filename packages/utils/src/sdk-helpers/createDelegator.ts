@@ -8,6 +8,7 @@ import {
 } from 'redux-anno';
 
 import {
+  UNDEFINED_SYMBOL,
   ClientDelegatorBaseOption,
   deserializeMessage,
   HealthStatus,
@@ -79,7 +80,8 @@ export function createDelegator(option: DelegatorOption) {
   const delegateProtImpl = {
     ready: (msg: InitMessage) => {
       for (const field of fields) {
-        lastState[field] = theInst[field].value;
+        const theValue = theInst[field].value;
+        lastState[field] = theValue === undefined || theValue === null ? UNDEFINED_SYMBOL : theValue;
       }
       postMessage(
         serializeMessage({

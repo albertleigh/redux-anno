@@ -5,6 +5,7 @@ import {ThunkField, ExtractThunkFieldPayload, ExtractThunkFieldResult} from 'red
 import {SagaField, ExtractSagaFieldPayload, ExtractSagaFieldResult} from 'redux-anno/lib/esm/saga';
 
 import {
+  UNDEFINED_SYMBOL,
   ClientDelegatorBaseOption,
   HealthStatus,
   serializeMessage,
@@ -132,7 +133,9 @@ export function createClient<T>(option: ClientOption): Client<T> {
         case 'READY':
           // populate all event emitters
           Object.keys(msg.state).forEach((field) => {
-            (result.instance as any)[field] = new ValueEventEmitter<any>(msg.state[field]);
+            const value = msg.state[field];
+            (result.instance as any)[field] =
+              value === UNDEFINED_SYMBOL ? new ValueEventEmitter<any>(undefined) : new ValueEventEmitter<any>(value);
           });
           for (const method of msg.methods) {
             (result.instance as any)[method] = (payload?: any) => {

@@ -1,5 +1,7 @@
 export const MSG_PREFIX = '__anno_sdk_helper_msg:';
 
+export const UNDEFINED_SYMBOL = '__anno_sdk_helper_undefined';
+
 export interface ClientDelegatorBaseOption {
   contextName: string;
   modelName: string;
