@@ -1,4 +1,4 @@
-import {createState, State, Reducer, Saga, Model, createReducer} from 'redux-anno';
+import {createReducer, createState, Model, MODEL_TYPE, Reducer, Saga, State} from 'redux-anno';
 import {BaseRepository} from './BaseRepository';
 import {apply, putResolve} from 'redux-saga/effects';
 
@@ -21,7 +21,7 @@ export interface ItemsOfOneTimestamp<T> {
   timestamp: number;
 }
 
-@Model()
+@Model(MODEL_TYPE.SINGLETON, 'CachedRepository')
 export class CachedRepository<T> extends BaseRepository<T> {
   @State timestampById = createState<Record<string, number>>({});
   @State expiredTimestampById = createState<Record<string, number>>({});

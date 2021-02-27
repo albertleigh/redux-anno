@@ -5,7 +5,7 @@ import {BaseView} from './BaseView';
 import {WelcomeView} from './WelcomeView';
 import {StepView} from './StepView';
 
-@Model(MODEL_TYPE.SINGLETON)
+@Model(MODEL_TYPE.SINGLETON, 'StackedViewManager')
 export class StackedViewManager extends BaseStackViewManager<AnyClass<BaseView>> {
   *onPageAdded(_ins: InsTyp<AnyClass<BaseView>>): Generator<any, any, any> {
     console.log('[StackedViewManger::onPageAdded]', _ins);

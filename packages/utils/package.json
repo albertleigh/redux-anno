@@ -1,6 +1,6 @@
 {
   "name": "redux-anno-utils",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Utils package for redux-anno",
   "keywords": [
     "redux-anno"
@@ -8,14 +8,11 @@
   "files": [
     "lib"
   ],
-  "type": "module",
-  "main": "lib/index.js",
-  "exports": {
-    "./examples/": "lib/examples/"
-  },
+  "main": "lib/index",
   "scripts": {
     "clean": "rimraf lib",
     "build": "npm run clean && tsc -p ./tsconfig.json",
+    "test": "jest",
     "prepublishOnly": "npm run build",
     "postpublish": "node ./scripts/post-publish.js"
   },
@@ -26,7 +23,7 @@
   "author": "Wentao LI",
   "license": "MIT",
   "dependencies": {
-    "redux-anno": "^0.0.6"
+    "redux-anno": "^0.0.7"
   },
   "optionalDependencies": {
     "react": "^16.13.1"

@@ -2,10 +2,10 @@
   "compilerOptions": {
     "baseUrl": ".",
     "outDir": "./lib",
-    "target": "ES5",
+    "target": "es2019",
     "lib": ["dom", "dom.iterable", "esnext"],
     "skipLibCheck": true,
-    "module": "ES2020",
+    "module": "commonjs",
     "strict": true,
     "allowJs": true,
     "esModuleInterop": true,

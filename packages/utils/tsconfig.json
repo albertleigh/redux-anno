@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "baseUrl": ".",
-    "target": "es5",
+    "target": "es2019",
     "lib": ["esnext", "dom"],
     "skipLibCheck": true,
     "esModuleInterop": true,
@@ -11,7 +11,7 @@
     "strictPropertyInitialization": false,
     "experimentalDecorators": true,
     "forceConsistentCasingInFileNames": true,
-    "module": "esnext",
+    "module": "commonjs",
     "moduleResolution": "node",
     "declaration": true,
     "importHelpers": true,

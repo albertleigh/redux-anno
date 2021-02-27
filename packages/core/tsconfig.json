@@ -11,7 +11,7 @@
     "strictPropertyInitialization": false,
     "experimentalDecorators": true,
     "forceConsistentCasingInFileNames": true,
-    "module": "esnext",
+    "module": "commonjs",
     "moduleResolution": "node",
     "declaration": true,
     "importHelpers": true,

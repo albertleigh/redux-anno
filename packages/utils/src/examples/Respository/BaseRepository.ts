@@ -1,5 +1,5 @@
 import {all, putResolve} from 'redux-saga/effects';
-import {createState, State, Reducer, Saga, Model, createReducer} from 'redux-anno';
+import {createReducer, createState, Model, MODEL_TYPE, Reducer, Saga, State} from 'redux-anno';
 
 // import {ModelSates} from 'redux-anno'
 // ModelSates<BaseRepository<T>>
@@ -8,7 +8,7 @@ interface State<T> {
   byId: Record<string, T>;
 }
 
-@Model()
+@Model(MODEL_TYPE.SINGLETON, 'BaseRepository')
 export class BaseRepository<T> {
   @State allIds = createState<string[]>([]);
   @State byId = createState<Record<string, T>>({} as Record<string, T>);
