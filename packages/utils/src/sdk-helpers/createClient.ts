@@ -29,13 +29,25 @@ export interface Client<T> {
     [P in keyof T]: T[P] extends StateField<infer S>
       ? ValueEventEmitter<S>
       : T[P] extends ThunkField
-      ? (payload: ExtractThunkFieldPayload<T[P]>) => Promise<ExtractThunkFieldResult<T[P]>>
+      ? NonNullable<ExtractThunkFieldPayload<T[P]>> extends never
+        ? () => Promise<ExtractThunkFieldResult<T[P]>>
+        : ExtractThunkFieldPayload<T[P]> & undefined extends never
+        ? (payload: ExtractThunkFieldPayload<T[P]>) => Promise<ExtractThunkFieldResult<T[P]>>
+        : (payload?: NonNullable<ExtractThunkFieldPayload<T[P]>>) => Promise<ExtractThunkFieldResult<T[P]>>
       : T[P] extends SagaField
-      ? (payload: ExtractSagaFieldPayload<T[P]>) => Promise<ExtractSagaFieldResult<T[P]>>
+      ? NonNullable<ExtractSagaFieldPayload<T[P]>> extends never
+        ? () => Promise<ExtractSagaFieldResult<T[P]>>
+        : ExtractSagaFieldPayload<T[P]> & undefined extends never
+        ? (payload: ExtractSagaFieldPayload<T[P]>) => Promise<ExtractSagaFieldResult<T[P]>>
+        : (payload?: NonNullable<ExtractSagaFieldPayload<T[P]>>) => Promise<ExtractSagaFieldResult<T[P]>>
       : T[P] extends ComputedField<infer C>
       ? ValueEventEmitter<C>
       : T[P] extends IsAnnoReducerField
-      ? (payload: ExtractReducerFieldPayload<T[P]>) => Promise<void>
+      ? NonNullable<ExtractReducerFieldPayload<T[P]>> extends undefined
+        ? () => Promise<void>
+        : ExtractReducerFieldPayload<T[P]> & undefined extends never
+        ? (payload: ExtractReducerFieldPayload<T[P]>) => Promise<void>
+        : (payload?: NonNullable<ExtractReducerFieldPayload<T[P]>>) => Promise<void>
       : unknown;
   };
   close(): void;
@@ -148,7 +160,9 @@ export function createClient<T>(option: ClientOption): Client<T> {
           // partial populate all those event emitters
           Object.keys(msg.partialState).forEach((field) => {
             if (field in result.instance) {
-              (result.instance as any)[field].emit(msg.partialState[field]);
+              const rawValue = msg.partialState[field];
+              const nextValue = rawValue === UNDEFINED_SYMBOL ? undefined : rawValue;
+              (result.instance as any)[field].emit(nextValue);
             }
           });
           clientProtImpl.ack(msg);

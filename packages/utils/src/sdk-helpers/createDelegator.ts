@@ -99,7 +99,8 @@ export function createDelegator(option: DelegatorOption) {
       let needToUpdate = false;
       for (const field of fields) {
         if (lastState[field] !== theInst[field].value) {
-          partialState[field] = theInst[field].value;
+          const theValue = theInst[field].value;
+          partialState[field] = theValue === undefined || theValue === null ? UNDEFINED_SYMBOL : theValue;
           needToUpdate = true;
         }
       }
