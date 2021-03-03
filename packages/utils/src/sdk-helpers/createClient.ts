@@ -148,7 +148,9 @@ export function createClient<T>(option: ClientOption): Client<T> {
           // partial populate all those event emitters
           Object.keys(msg.partialState).forEach((field) => {
             if (field in result.instance) {
-              (result.instance as any)[field].emit(msg.partialState[field]);
+              const rawValue = msg.partialState[field];
+              const nextValue = rawValue === UNDEFINED_SYMBOL ? undefined : rawValue;
+              (result.instance as any)[field].emit(nextValue);
             }
           });
           clientProtImpl.ack(msg);
