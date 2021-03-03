@@ -1,6 +1,6 @@
 {
   "name": "redux-anno-utils",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Utils package for redux-anno",
   "keywords": [
     "redux-anno"
@@ -23,7 +23,7 @@
   "author": "Wentao LI",
   "license": "MIT",
   "dependencies": {
-    "redux-anno": "^0.0.7"
+    "redux-anno": "^0.0.8"
   },
   "optionalDependencies": {
     "react": "^16.13.1"
