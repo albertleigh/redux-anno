@@ -16,11 +16,7 @@ import {AnyClass, KeysOfType, prePopulateMapFieldViaPrototype, Proto} from './ut
 export type SagaField<TPayload = any, TResult = any> =
   | ((payload: TPayload) => Generator<StrictEffect | any, TResult>)
   | (() => Generator<StrictEffect | any, TResult>);
-export type ExtractSagaFieldPayload<T> = T extends () => Generator
-  ? undefined
-  : T extends (payload: infer _TPayload) => Generator
-  ? _TPayload
-  : undefined;
+export type ExtractSagaFieldPayload<T> = T extends (...args: infer _APayload) => Generator ? _APayload[0] : never;
 export type ExtractSagaFieldResult<T> = T extends
   | ((payload: any) => Generator<any, infer _TResult>)
   | (() => Generator<any, infer _TResult>)

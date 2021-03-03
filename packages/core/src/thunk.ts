@@ -5,12 +5,7 @@ import {ActionHelper, implementActionHelper} from './action';
 export type ThunkField<TPayload = any, TResult = any> =
   | ((payload: TPayload) => Promise<TResult>)
   | (() => Promise<TResult>);
-export type ExtractThunkFieldPayload<T> = T extends () => Promise<any>
-  ? undefined
-  : T extends (payload: infer _TPayload) => Promise<any>
-  ? _TPayload
-  : undefined;
-
+export type ExtractThunkFieldPayload<T> = T extends (...args: infer _APayload) => Promise<any> ? _APayload[0] : never;
 export type ExtractThunkFieldResult<T> = T extends
   | ((payload: any) => Promise<infer _TResult>)
   | (() => Promise<infer _TResult>)
