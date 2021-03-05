@@ -79,15 +79,17 @@ export function createDelegator(option: DelegatorOption) {
 
   const delegateProtImpl = {
     ready: (msg: InitMessage) => {
+      const lastStateSend: any = {};
       for (const field of fields) {
         const theValue = theInst[field].value;
-        lastState[field] = theValue === undefined || theValue === null ? UNDEFINED_SYMBOL : theValue;
+        lastStateSend[field] = theValue === undefined || theValue === null ? UNDEFINED_SYMBOL : theValue;
+        lastState[field] = theValue;
       }
       postMessage(
         serializeMessage({
           channel: 'READY',
           sequence: msg.sequence,
-          state: lastState,
+          state: lastStateSend,
           methods: Array.from(dispatchableKeys),
           ...instBase,
         })
@@ -96,11 +98,13 @@ export function createDelegator(option: DelegatorOption) {
     update: () => {
       const sequence = IdGenerator.nextId();
       const partialState: any = {};
+      const partialStateSent: any = {};
       let needToUpdate = false;
       for (const field of fields) {
         if (lastState[field] !== theInst[field].value) {
           const theValue = theInst[field].value;
-          partialState[field] = theValue === undefined || theValue === null ? UNDEFINED_SYMBOL : theValue;
+          partialStateSent[field] = theValue === undefined || theValue === null ? UNDEFINED_SYMBOL : theValue;
+          partialState[field] = theValue;
           needToUpdate = true;
         }
       }
@@ -109,7 +113,7 @@ export function createDelegator(option: DelegatorOption) {
           serializeMessage({
             channel: 'UPDATE',
             sequence,
-            partialState,
+            partialState: partialStateSent,
             ...instBase,
           })
         );
