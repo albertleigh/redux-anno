@@ -1,6 +1,6 @@
 {
   "name": "react-sample-app",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "private": true,
   "homepage": ".",
   "dependencies": {
@@ -22,10 +22,10 @@
     "react-redux": "^7.2.2",
     "react-scripts": "^4.0.2",
     "redux": "^4.0.5",
-    "redux-anno": "^0.0.8",
-    "redux-anno-utils": "^0.0.8",
+    "redux-anno": "^0.0.9",
+    "redux-anno-utils": "^0.0.9",
     "redux-saga": "^1.1.3",
-    "sample-shared-models": "^0.0.8",
+    "sample-shared-models": "^0.0.9",
     "typescript": "^4.1.5"
   },
   "scripts": {
