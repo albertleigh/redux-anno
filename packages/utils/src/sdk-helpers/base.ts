@@ -2,11 +2,21 @@ export const MSG_PREFIX = '__anno_sdk_helper_msg:';
 
 export const UNDEFINED_SYMBOL = '__anno_sdk_helper_undefined';
 
+export type MessageListener = (data: string) => void;
+
 export interface ClientDelegatorBaseOption {
   contextName: string;
   modelName: string;
   modelKey: string | undefined;
-  // model
+}
+
+export interface DelegatorOption extends ClientDelegatorBaseOption {
+  onMessage(listener: (data: string, clientId: string) => void): void;
+  postMessage?(data: string, clientId?: string): void;
+  unsubscribe?(listener: (data: string, clientId: string) => void): void;
+}
+
+export interface ClientOption extends ClientDelegatorBaseOption {
   onMessage(listener: (data: string) => void): void;
   postMessage(data: string): void;
   unsubscribe?(listener: (data: string) => void): void;
@@ -25,11 +35,23 @@ export type SdkMessage =
   | UpdateMessage
   | TriggerMessage
   | ReturnMessage
+  | DisconnectMessage
+  | DisconnectedMessage
   | CloseMessage
   | FinMessage;
 
 export interface BaseMessage {
-  readonly channel: 'INIT' | 'READY' | 'UPDATE' | 'ACK' | 'TRIGGER' | 'RETURN' | 'CLOSE' | 'FIN';
+  readonly channel:
+    | 'INIT'
+    | 'READY'
+    | 'UPDATE'
+    | 'ACK'
+    | 'TRIGGER'
+    | 'RETURN'
+    | 'DISCONNECT'
+    | 'DISCONNECTED'
+    | 'CLOSE'
+    | 'FIN';
   readonly sequence: number;
   readonly contextName: string;
   readonly modelName: string;
@@ -65,6 +87,14 @@ export interface ReturnMessage extends BaseMessage {
   readonly channel: 'RETURN';
   readonly result?: any | undefined;
   readonly error?: any | undefined;
+}
+
+export interface DisconnectMessage extends BaseMessage {
+  readonly channel: 'DISCONNECT';
+}
+
+export interface DisconnectedMessage extends BaseMessage {
+  readonly channel: 'DISCONNECTED';
 }
 
 export interface CloseMessage extends BaseMessage {

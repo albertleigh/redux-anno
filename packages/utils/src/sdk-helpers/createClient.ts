@@ -1,24 +1,22 @@
 import {StateField} from 'redux-anno/lib/esm/state';
 import {ComputedField} from 'redux-anno/lib/esm/computed';
-import {IsAnnoReducerField, ExtractReducerFieldPayload} from 'redux-anno/lib/esm/reducer';
-import {ThunkField, ExtractThunkFieldPayload, ExtractThunkFieldResult} from 'redux-anno/lib/esm/thunk';
-import {SagaField, ExtractSagaFieldPayload, ExtractSagaFieldResult} from 'redux-anno/lib/esm/saga';
+import {ExtractReducerFieldPayload, IsAnnoReducerField} from 'redux-anno/lib/esm/reducer';
+import {ExtractThunkFieldPayload, ExtractThunkFieldResult, ThunkField} from 'redux-anno/lib/esm/thunk';
+import {ExtractSagaFieldPayload, ExtractSagaFieldResult, SagaField} from 'redux-anno/lib/esm/saga';
 
 import {
-  UNDEFINED_SYMBOL,
-  ClientDelegatorBaseOption,
+  ClientOption,
+  CloseMessage,
+  deserializeMessage,
   HealthStatus,
   serializeMessage,
   ThenableHandler,
+  UNDEFINED_SYMBOL,
   UpdateMessage,
-  deserializeMessage,
-  CloseMessage,
 } from './base';
 
 import IdGenerator from './utils/IdGenerator';
 import {ValueEventEmitter} from './utils/ValueEventEmitter';
-
-export type ClientOption = ClientDelegatorBaseOption;
 
 export interface Client<T> {
   health: ValueEventEmitter<HealthStatus>;
@@ -50,7 +48,7 @@ export interface Client<T> {
         : (payload?: NonNullable<ExtractReducerFieldPayload<T[P]>>) => Promise<void>
       : unknown;
   };
-  close(): void;
+  disconnect(): void;
   unsubscribe(): void;
 }
 
@@ -110,7 +108,7 @@ export function createClient<T>(option: ClientOption): Client<T> {
       );
       return res;
     },
-    close: () => {
+    disconnect: () => {
       const sequence = IdGenerator.nextId();
       result.clientSeq = sequence;
       const res = new Promise((resolve, reject) => {
@@ -118,7 +116,7 @@ export function createClient<T>(option: ClientOption): Client<T> {
       });
       postMessage(
         serializeMessage({
-          channel: 'CLOSE',
+          channel: 'DISCONNECT',
           sequence,
           ...instBase,
         })
@@ -143,18 +141,20 @@ export function createClient<T>(option: ClientOption): Client<T> {
     if (!!msg) {
       switch (msg.channel) {
         case 'READY':
-          // populate all event emitters
-          Object.keys(msg.state).forEach((field) => {
-            const value = msg.state[field];
-            (result.instance as any)[field] =
-              value === UNDEFINED_SYMBOL ? new ValueEventEmitter<any>(undefined) : new ValueEventEmitter<any>(value);
-          });
-          for (const method of msg.methods) {
-            (result.instance as any)[method] = (payload?: any) => {
-              return clientProtImpl.trigger(method, payload);
-            };
+          // populate all event emitters only for init
+          if (result.health.value === HealthStatus.INIT) {
+            Object.keys(msg.state).forEach((field) => {
+              const value = msg.state[field];
+              (result.instance as any)[field] =
+                value === UNDEFINED_SYMBOL ? new ValueEventEmitter<any>(undefined) : new ValueEventEmitter<any>(value);
+            });
+            for (const method of msg.methods) {
+              (result.instance as any)[method] = (payload?: any) => {
+                return clientProtImpl.trigger(method, payload);
+              };
+            }
+            result.health.emit(HealthStatus.LIVE);
           }
-          result.health.emit(HealthStatus.LIVE);
           break;
         case 'UPDATE':
           // partial populate all those event emitters
@@ -168,6 +168,7 @@ export function createClient<T>(option: ClientOption): Client<T> {
           clientProtImpl.ack(msg);
           break;
         case 'RETURN':
+          // todo might need to consider it again
           if (thenableHandlers.has(msg.sequence)) {
             const {resolve, reject} = thenableHandlers.get(msg.sequence)!;
             if (!!msg.error) {
@@ -180,7 +181,7 @@ export function createClient<T>(option: ClientOption): Client<T> {
         case 'CLOSE':
           clientProtImpl.fin(msg);
           break;
-        case 'FIN':
+        case 'DISCONNECTED':
           result.health.emit(HealthStatus.DEAD);
           unsubscribe && unsubscribe(listener);
           break;
@@ -194,7 +195,7 @@ export function createClient<T>(option: ClientOption): Client<T> {
   onMessage(listener);
   clientProtImpl.init();
 
-  result.close = clientProtImpl.close;
+  result.disconnect = clientProtImpl.disconnect;
   result.unsubscribe = () => {
     unsubscribe && unsubscribe(listener);
   };
