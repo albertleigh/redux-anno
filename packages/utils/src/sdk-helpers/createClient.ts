@@ -5,7 +5,7 @@ import {ExtractThunkFieldPayload, ExtractThunkFieldResult, ThunkField} from 'red
 import {ExtractSagaFieldPayload, ExtractSagaFieldResult, SagaField} from 'redux-anno/lib/esm/saga';
 
 import {
-  ClientDelegatorBaseOption,
+  ClientOption,
   CloseMessage,
   deserializeMessage,
   HealthStatus,
@@ -17,8 +17,6 @@ import {
 
 import IdGenerator from './utils/IdGenerator';
 import {ValueEventEmitter} from './utils/ValueEventEmitter';
-
-export type ClientOption = ClientDelegatorBaseOption;
 
 export interface Client<T> {
   health: ValueEventEmitter<HealthStatus>;
@@ -50,7 +48,7 @@ export interface Client<T> {
         : (payload?: NonNullable<ExtractReducerFieldPayload<T[P]>>) => Promise<void>
       : unknown;
   };
-  close(): void;
+  disconnect(): void;
   unsubscribe(): void;
 }
 
@@ -110,7 +108,7 @@ export function createClient<T>(option: ClientOption): Client<T> {
       );
       return res;
     },
-    close: () => {
+    disconnect: () => {
       const sequence = IdGenerator.nextId();
       result.clientSeq = sequence;
       const res = new Promise((resolve, reject) => {
@@ -118,7 +116,7 @@ export function createClient<T>(option: ClientOption): Client<T> {
       });
       postMessage(
         serializeMessage({
-          channel: 'CLOSE',
+          channel: 'DISCONNECT',
           sequence,
           ...instBase,
         })
@@ -183,7 +181,7 @@ export function createClient<T>(option: ClientOption): Client<T> {
         case 'CLOSE':
           clientProtImpl.fin(msg);
           break;
-        case 'FIN':
+        case 'DISCONNECTED':
           result.health.emit(HealthStatus.DEAD);
           unsubscribe && unsubscribe(listener);
           break;
@@ -197,7 +195,7 @@ export function createClient<T>(option: ClientOption): Client<T> {
   onMessage(listener);
   clientProtImpl.init();
 
-  result.close = clientProtImpl.close;
+  result.disconnect = clientProtImpl.disconnect;
   result.unsubscribe = () => {
     unsubscribe && unsubscribe(listener);
   };

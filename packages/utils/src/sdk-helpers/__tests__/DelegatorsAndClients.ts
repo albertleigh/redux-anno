@@ -72,29 +72,36 @@ describe('DelegatorsAndClients', () => {
   });
 
   it('delegator close', async () => {
+    const currentClientId = 'test01 delegator close';
+
     const defaultCtx = getContext();
     const counterInst = defaultCtx.getOneInstance(Counter);
     await counterInst.count.dispatch(0);
 
     const unsubscribe = jest.fn();
 
-    let delegatedListener: (data: string) => void;
+    let delegatedListener: (data: string, clientId: string) => void;
     let clientListener: (data: string) => void;
     const deleMsgs: string[] = [];
+    const specificDeleMsgs: string[] = [];
     const cltMsgs: string[] = [];
 
     const delegator = createDelegator({
       contextName: counterInst.contextName,
       modelName: counterInst.modelName,
       modelKey: counterInst.modelKey,
-      onMessage(listener: (data: string) => void) {
+      onMessage(listener: (data: string, client: string) => void) {
         delegatedListener = listener;
       },
-      postMessage(data: string) {
+      postMessage(data: string, clientId) {
         deleMsgs.push(data);
-        clientListener && clientListener(data);
       },
       unsubscribe,
+    });
+
+    delegator.registerClient(currentClientId, (data) => {
+      specificDeleMsgs.push(data);
+      clientListener && clientListener(data);
     });
 
     expect(delegator.health.value).toBe(HealthStatus.INIT);
@@ -108,7 +115,7 @@ describe('DelegatorsAndClients', () => {
       },
       postMessage(data: string) {
         cltMsgs.push(data);
-        delegatedListener && delegatedListener(data);
+        delegatedListener && delegatedListener(data, currentClientId);
       },
       unsubscribe,
     });
@@ -162,21 +169,26 @@ describe('DelegatorsAndClients', () => {
 
     expect(unsubscribe).toHaveBeenCalledTimes(2);
 
-    expect(deleMsgs.length).toEqual(cltMsgs.length);
+    expect(deleMsgs.length).toBeLessThan(specificDeleMsgs.length);
+    expect(deleMsgs.length).toBeLessThan(cltMsgs.length);
+    expect(specificDeleMsgs.length).toEqual(cltMsgs.length);
   });
 
   it('client close w/ repeater', async () => {
+    const currentClientId = 'test02 client close w/ repeater';
+
     const defaultCtx = getContext();
     const counterInst = defaultCtx.getOneInstance(Counter);
     await counterInst.count.dispatch(0);
 
     const unsubscribe = jest.fn();
 
-    let delegatedListener: (data: string) => void;
+    let delegatedListener: (data: string, clientId: string) => void;
     let clientListener: (data: string) => void;
     let repeaterUpListener: (data: string) => void;
     let repeaterDownListener: (data: string) => void;
     const deleMsgs: string[] = [];
+    const specificDeleMsgs: string[] = [];
     const cltMsgs: string[] = [];
     const rpUpMsgs: string[] = [];
     const rpDownMsgs: string[] = [];
@@ -185,14 +197,18 @@ describe('DelegatorsAndClients', () => {
       contextName: counterInst.contextName,
       modelName: counterInst.modelName,
       modelKey: counterInst.modelKey,
-      onMessage(listener: (data: string) => void) {
+      onMessage(listener: (data: string, clientId: string) => void) {
         delegatedListener = listener;
       },
       postMessage(data: string) {
         deleMsgs.push(data);
-        repeaterUpListener && repeaterUpListener(data);
       },
       unsubscribe,
+    });
+
+    delegator.registerClient(currentClientId, (data) => {
+      specificDeleMsgs.push(data);
+      repeaterUpListener && repeaterUpListener(data);
     });
 
     expect(delegator.health.value).toBe(HealthStatus.INIT);
@@ -200,7 +216,7 @@ describe('DelegatorsAndClients', () => {
     const repeater = createRepeater({
       postUpStreamMessage(data: string) {
         rpUpMsgs.push(data);
-        delegatedListener && delegatedListener(data);
+        delegatedListener && delegatedListener(data, currentClientId);
       },
       onUpStreamMessage(listener: (data: string) => void) {
         repeaterUpListener = listener;
@@ -272,10 +288,10 @@ describe('DelegatorsAndClients', () => {
 
     jest.runAllTimers();
 
-    client.close();
+    client.disconnect();
     // delegator.close();
 
-    expect(delegator.health.value).toBe(HealthStatus.DEAD);
+    expect(delegator.health.value).toBe(HealthStatus.LIVE);
     expect(repeater.health.value).toBe(HealthStatus.LIVE);
     expect(client.health.value).toBe(HealthStatus.DEAD);
 
@@ -283,9 +299,11 @@ describe('DelegatorsAndClients', () => {
 
     expect(repeater.health.value).toBe(HealthStatus.DEAD);
 
-    expect(unsubscribe).toHaveBeenCalledTimes(2);
+    expect(unsubscribe).toHaveBeenCalledTimes(1);
 
-    expect(deleMsgs.length).toEqual(cltMsgs.length);
+    expect(deleMsgs.length).toBeLessThan(specificDeleMsgs.length);
+    expect(deleMsgs.length).toBeLessThan(cltMsgs.length);
+    expect(specificDeleMsgs.length).toEqual(cltMsgs.length);
     expect(rpUpMsgs.length).toEqual(rpDownMsgs.length);
   });
 });
